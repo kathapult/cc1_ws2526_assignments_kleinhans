@@ -7,7 +7,7 @@ console.log(THREE);
 // 1. SCENE
 // ============================================
 const scene = new THREE.Scene();
-const circleAmount = 20;
+const circleAmount = 12;
 
 // ============================================
 // 2. CAMERA
@@ -96,20 +96,14 @@ function animate() {
   
   circles.forEach(circle => {
     const data = circle.userData;
-    
     data.scale += data.speed * data.dir;
     circle.scale.setScalar(data.scale);
-    const radius =
-      geometry.parameters.radius * data.scale;
+    const radius = geometry.parameters.radius * data.scale;
 
-    if (radius >= width || radius >= height) {
-      data.dir = -2;
-    }
-
-    if (radius <= 0.2) {
-      data.dir = 1;
-    }
+    if (radius >= width * 0.5 || radius >= height * 0.5) data.dir = -1;
+    if (radius <= 0.2) data.dir = 1;
   });
+
 
   //changing color
   hue += 0.001;   
@@ -118,10 +112,10 @@ function animate() {
   material.color.setHSL(hue, 0.5, 0.5);
 
   //camera changing
-  cameraZ += 0.01;   
+  //cameraZ += 0.01;   
 
-  if (cameraZ > cameraSpeed) cameraZ = 0;
-  camera.position.z = cameraZ;
+  //if (cameraZ > cameraSpeed) cameraZ = 0;
+  //camera.position.z = cameraZ;
 
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
@@ -133,11 +127,11 @@ animate();
 // ============================================
 // 8. HANDLE WINDOW RESIZE
 // ============================================
+
 function onWindowResize() {
   // Update camera aspect ratio
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-
   // Update renderer size
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
