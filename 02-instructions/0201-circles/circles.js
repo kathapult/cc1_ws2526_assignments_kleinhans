@@ -42,7 +42,6 @@ for (let i = 1; i < positionAttribute.count; i++) {
 }
 const outlineGeometry = new THREE.BufferGeometry().setFromPoints(points);
 
-
 // ============================================
 // 5. MATERIAL
 // ============================================
