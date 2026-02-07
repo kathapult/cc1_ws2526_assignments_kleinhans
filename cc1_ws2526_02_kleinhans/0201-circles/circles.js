@@ -3,6 +3,7 @@ import { createNoise2D } from 'simplex-noise';
 
 console.log(THREE);
 
+
 // ============================================
 // 1. SCENE
 // ============================================

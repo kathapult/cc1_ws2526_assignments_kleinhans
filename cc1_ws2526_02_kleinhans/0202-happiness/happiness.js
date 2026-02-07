@@ -166,14 +166,14 @@ for (let x = 0; x < cols; x++) {
       baseScale,
       scale: baseScale,
       dir: 1,
-      speed: 0.005
+      speed: 0.001
     };
 
      body.userData = {
       baseScale,
       scale: baseScale,
       dir: 1,
-      speed: 0.005
+      speed: 0.001
     };
 
     scene.add(circle);
