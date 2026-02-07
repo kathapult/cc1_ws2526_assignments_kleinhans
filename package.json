@@ -1,0 +1,28 @@
+{
+  "name": "cc1_assigments",
+  "version": "1.0.0",
+  "description": "Creative Coding 1 assignments",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kathapult/CC1_assigments.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/kathapult/CC1_assigments/issues"
+  },
+  "homepage": "https://github.com/kathapult/CC1_assigments#readme",
+  "dependencies": {
+    "simplex-noise": "^4.0.3",
+    "three": "^0.182.0",
+    "vite": "^7.3.1"
+  }
+}
