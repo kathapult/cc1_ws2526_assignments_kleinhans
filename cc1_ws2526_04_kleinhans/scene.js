@@ -68,6 +68,9 @@ circleOutline.position.y = 3.5;
 const treeGroup = new THREE.Group();
 scene.add(treeGroup);
 
+let currentLevel = 0;
+const maxGrowLevel = 7;
+
 function buildTree() {
   treeGroup.clear();
 
@@ -75,9 +78,17 @@ function buildTree() {
     new THREE.Vector3(0, -3, 0),
     new THREE.Vector3(0, 1, 0),
     parameter.vector1,
-    7
+    currentLevel
   );
 }
+
+window.addEventListener('click', () => {
+  if (currentLevel < maxGrowLevel) {
+    currentLevel++;
+    buildTree();
+  }
+});
+
 
 
 function drawBranch(start, end, radius = 0.6) {
