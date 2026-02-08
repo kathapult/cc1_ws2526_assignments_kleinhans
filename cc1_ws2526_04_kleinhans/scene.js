@@ -11,8 +11,7 @@ import { AmbientLight } from 'three';
 // 1. SCENE
 // ============================================
 const scene = new THREE.Scene();
-//scene.background = new THREE.Color(0x000000);
-
+const branchGeometry = new THREE.CylinderGeometry(1, 1, 1, 6);
 
 // ============================================
 // 2. CAMERA
@@ -22,7 +21,7 @@ const aspect = window.innerWidth / window.innerHeight;
 const near = 0.01;
 const far = 100;
 const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-camera.position.z = 10;
+camera.position.z = 30;
 
 // ============================================
 // 3. RENDERER
@@ -33,7 +32,6 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
-
 // ============================================
 // 5. MATERIAL
 // ============================================
@@ -43,10 +41,29 @@ const treeMaterial = new THREE.MeshBasicMaterial( {
   metalness: 0.0 } 
 );
 
-
+// ============================================
 // 4. GEOMETRY
-const light = new AmbientLight(0xffffff, 3.5);
+// ============================================
+const light = new AmbientLight(0xffffff, 0.5);
 scene.add(light);
+
+const geometry = new THREE.CircleGeometry( 14, 40 );
+// remove outline
+geometry.deleteAttribute('uv'); 
+geometry.deleteAttribute('normal'); 
+const positionAttribute = geometry.getAttribute('position');
+const points = [];
+for (let i = 1; i < positionAttribute.count; i++) {
+    points.push(new THREE.Vector3().fromBufferAttribute(positionAttribute, i));
+}
+const outlineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+
+// ============================================
+// 5. MESH
+// ============================================
+const circleOutline = new THREE.LineLoop(outlineGeometry, treeMaterial);
+scene.add(circleOutline);
+circleOutline.position.y = 3.5;
 
 const treeGroup = new THREE.Group();
 scene.add(treeGroup);
@@ -63,19 +80,13 @@ function buildTree() {
 }
 
 
-
 function drawBranch(start, end, radius = 0.6) {
   const direction = new THREE.Vector3().subVectors(end, start);
   const length = direction.length();
 
-  const geometry = new THREE.CylinderGeometry(
-    radius,        
-    radius * 0.8,  
-    length,
-    6
-  );
+  const mesh = new THREE.Mesh(branchGeometry, treeMaterial);
+ mesh.scale.set(radius, length, radius);
 
-  const mesh = new THREE.Mesh(geometry, treeMaterial);
 
   const midpoint = start.clone().add(end).multiplyScalar(0.5);
   mesh.position.copy(midpoint);
@@ -118,9 +129,7 @@ function growLine(start, direction, length, level) {
   if (level <= 0) return;
 
   const end = start.clone().add(direction.clone().multiplyScalar(length));
-
   drawBranch(start, end, 0.08 * level / maxLevel);
-
   
   const dir1 = direction.clone().applyAxisAngle(
     new THREE.Vector3(0, 0, parameter.vector1),
@@ -164,14 +173,13 @@ function getVisibleSize(camera) {
 
 
 function animate() {
-  //scene.rotation.y += 0.002;
+  scene.rotation.y += 0.002;
+   controls.update();
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
   
   //parameter.length += 0.002;
   //parameter.angle += 0.002;
-
-  buildTree();
 
 };
 
@@ -182,10 +190,8 @@ animate();
 // ============================================
 
 function onWindowResize() {
-  // Update camera aspect ratio
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-  // Update renderer size
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
