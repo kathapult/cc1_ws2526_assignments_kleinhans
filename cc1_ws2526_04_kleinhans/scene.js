@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { createNoise2D } from 'simplex-noise';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GUI } from "lil-gui";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -47,6 +46,15 @@ const treeMaterial = new THREE.MeshBasicMaterial( {
 const light = new AmbientLight(0xffffff, 0.5);
 scene.add(light);
 
+gltfLoader.load("./material/stone_circle.glb", (gltf) => {
+  console.log(gltf);
+  const stoneCircle = gltf.scene;
+  stoneCircle.scale.set(2, 2, 2);
+  stoneCircle.position.x = 0;
+  stoneCircle.position.y = 0;
+  scene.add(stoneCircle );
+});
+
 const geometry = new THREE.CircleGeometry( 14, 40 );
 // remove outline
 geometry.deleteAttribute('uv'); 
@@ -64,12 +72,14 @@ const outlineGeometry = new THREE.BufferGeometry().setFromPoints(points);
 const circleOutline = new THREE.LineLoop(outlineGeometry, treeMaterial);
 scene.add(circleOutline);
 circleOutline.position.y = 3.5;
+circleOutline.position.z = -25;
+
 
 const treeGroup = new THREE.Group();
 scene.add(treeGroup);
+treeGroup.position.z = -25;
+treeGroup.position.y = -6;
 
-let currentLevel = 0;
-const maxGrowLevel = 7;
 
 function buildTree() {
   treeGroup.clear();
@@ -82,12 +92,22 @@ function buildTree() {
   );
 }
 
+let currentLevel = 1;
+let growFactor = 0.5;
+
 window.addEventListener('click', () => {
-  if (currentLevel < maxGrowLevel) {
-    currentLevel++;
-    buildTree();
-  }
+  growFactor = Math.min(growFactor + 0.2, 2);
+  currentLevel = Math.min(currentLevel + 1, maxLevel);
+
+  parameter.length = growFactor;
+  buildTree();
+
+  if (currentLevel === maxLevel) {
+  currentLevel = 1;
+}
 });
+
+
 
 
 
@@ -112,7 +132,7 @@ function drawBranch(start, end, radius = 0.6) {
 }
 
 let angle = 0;
-const maxLevel = 4;
+let maxLevel = 12;
 
 //controls
 const parameter = {
@@ -184,7 +204,7 @@ function getVisibleSize(camera) {
 
 
 function animate() {
-  scene.rotation.y += 0.002;
+  //scene.rotation.y += 0.002;
    controls.update();
   renderer.render(scene, camera);
   requestAnimationFrame(animate);

@@ -1,9 +1,8 @@
 import * as THREE from "three";
-import { createNoise2D } from 'simplex-noise';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GUI } from "lil-gui";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { AmbientLight } from 'three';
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 const gltfLoader = new GLTFLoader();
 const gui = new GUI();
