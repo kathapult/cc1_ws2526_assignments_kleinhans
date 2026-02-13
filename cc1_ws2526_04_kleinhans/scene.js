@@ -175,7 +175,7 @@ function buildTree() {
 
 // branch 
 let currentLevel = 1;
-let growFactor = 0.5;
+let growFactor = 0.7;
 
 function drawBranch(start, end, radius = 1.6) {
   const direction = new THREE.Vector3().subVectors(end, start);

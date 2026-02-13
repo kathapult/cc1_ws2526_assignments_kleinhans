@@ -30,3 +30,11 @@ h1 {
     letter-spacing: 10px;
     padding: 2rem 3rem 0 3rem;
 }
+
+.lil-gui {
+  position: absolute !important;
+  bottom: 20px;
+  right: 20px;
+  top: auto !important;
+}
+
