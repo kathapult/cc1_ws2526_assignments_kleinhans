@@ -144,6 +144,7 @@ function createCompassStarGeometry(
 // 5. MESH
 // ============================================
 const trigger = new THREE.Mesh(geoTrigger, outlineGeometry);
+//const resetBtn = new THREE.Mesh(geoTrigger, outlineGeometry);
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
@@ -156,23 +157,25 @@ trigger.position.z = 2;
 // ---- tree ----
 const treeGroup = new THREE.Group();
 treeGroup.position.y = 12;
+let startLevel = 7;
+
 
 function buildTree() {
   treeGroup.clear();
+
+  const levelToUse = currentLevel === 1 ? startLevel : currentLevel;
 
   growLine(
     new THREE.Vector3(0, -3, 0),
     new THREE.Vector3(0, 1, 0),
     parameter.vector1,
-    currentLevel
+    levelToUse
   );
 }
 
 // branch 
 let currentLevel = 1;
 let growFactor = 0.5;
-
-
 
 function drawBranch(start, end, radius = 1.6) {
   const direction = new THREE.Vector3().subVectors(end, start);
@@ -289,6 +292,7 @@ window.addEventListener('click', (event) => {
                 rotateCircle = true;
                 treeFinished = true;
                 scene.remove(trigger);
+                //scene.add(resetBtn);
             }
         }
     }
