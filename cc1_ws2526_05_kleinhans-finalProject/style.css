@@ -1,0 +1,24 @@
+/* Basic styling for three.js scenes */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  background-color: black;
+}
+
+#canvasThree {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.lil-gui {
+  position: absolute !important;
+  bottom: 20px;
+  right: 20px;
+  top: auto !important;
+}
+
