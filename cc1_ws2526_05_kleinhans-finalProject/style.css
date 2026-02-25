@@ -1,4 +1,3 @@
-/* Basic styling for three.js scenes */
 html,
 body {
   margin: 0;
@@ -7,12 +6,33 @@ body {
   width: 100%;
   height: 100%;
   background-color: black;
+ color: #ffa237!important;
+ cursor: none;
+}
+
+a {
+  list-style: none;
+  text-decoration: none;
 }
 
 #canvasThree {
   display: block;
   width: 100%;
-  height: 100%;
+  /* height: 100%;
+  position: fixed;
+  inset: 0;
+  z-index: 1; */
+}
+
+#uiCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+
+  z-index: 9999;
+
+  pointer-events: none;   /* DAS IST ENTSCHEIDEND */
 }
 
 .lil-gui {
@@ -20,5 +40,130 @@ body {
   bottom: 20px;
   right: 20px;
   top: auto !important;
+}
+
+@font-face {
+  font-family: 'Lostar';
+  src: url('/fonts/Lostar.ttf') format('truetype');
+}
+
+#navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+}
+
+.nav-item {
+  font-family: "cherry-blossoms-wide", sans-serif;
+  font-weight: 600;
+  font-style: normal;
+  font-size: 2rem;
+  padding: 0 3rem;
+}
+
+h1 {
+    font-family: 'Lostar';
+    text-align: center;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 3rem;
+    color:  rgb(255 244 87);
+    z-index: 2;
+    margin: 0;
+}
+
+.headlineContainer {
+  /* margin: 0;
+  position: absolute;
+  top: 0;
+  z-index: 10; */
+  text-align: center;
+  width: 100%;
+  padding: 0.2rem;
+  background-color:rgb(44 167 170); 
+  /* background: RGB(44 167 170);
+  background: linear-gradient(0deg,rgba(44, 167, 170, 0) 0%, rgba(44, 167, 170, 1) 30%); */
+}
+
+.hero-chicken {
+      margin: 0;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, 20%);
+    height: 60%;
+     z-index: 10;
+}
+
+.hero-chicken img {
+  height: 100%;
+}
+
+.palette {
+    margin: 0;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, 20%);
+    width: 100%;
+    z-index: 8;
+}
+
+.palette img {
+  width: 100%;
+}
+
+.nest {
+    margin: 0;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, 35%);
+    width: 60%;
+    z-index: 9;
+}
+
+.nest img {
+  width: 100%;
+}
+
+.federleicht {
+    margin: 0;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%,20%);
+    width: 24%;
+    z-index: 11;
+}
+
+.federleicht img {
+  width: 100%;
+}
+
+/* .graphic {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  bottom: 0;
+  border: 10px  double #ffa237;
+  z-index: 1000;
+  pointer-events: none!important;
+} */
+
+.layout {
+  display: grid;
+  /* grid-template-rows: 00px 2fr 260px; */
+}
+
+.stage {
+  position: relative;
+  overflow: hidden;
+}
+
+#canvasOverlay {
+  pointer-events: none;
+  background-color: #ffa237;
 }
 
