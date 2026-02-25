@@ -44,7 +44,7 @@ a {
 
 @font-face {
   font-family: 'Lostar';
-  src: url('/fonts/Lostar.ttf') format('truetype');
+  src: url('public/fonts/Lostar.ttf') format('truetype');
 }
 
 #navbar {
@@ -167,3 +167,29 @@ h1 {
   background-color: #ffa237;
 }
 
+
+
+
+/* LineUp Section START */
+.lineup-section {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4rem;
+
+  opacity: 0;
+  transform: translateY(50px);
+  pointer-events: none;
+
+  transition: 0.8s ease;
+}
+
+body[data-mode="lineup"] .lineup-section {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* LineUp Section END */

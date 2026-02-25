@@ -1,24 +1,24 @@
 import * as THREE from "three";
-//import { createNoise2D } from 'simplex-noise';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GUI } from "lil-gui";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
-import { createNoise2D } from 'simplex-noise';
+import { gsap } from "gsap";
 
 const gltfLoader = new GLTFLoader();
 //const gui = new GUI();
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-
 console.log(THREE);
 
 
 // ============================================
-// LAYOUT
+// LAYOUT / UI / MODES
 // ============================================
+
+// ---- navbar ----
 const navbar = document.querySelector(".navbar");
 const headline = document.querySelector(".headlineContainer");
 
@@ -26,9 +26,62 @@ function updateHeadlineOffset() {
   const navHeight = navbar.offsetHeight;
   headline.style.top = navHeight + 30 + "px";
 }
+  
+// ---- switch modes ----
+import { setMode } from "./sceneController.js";
+
+document.querySelector(".nav-home")
+.addEventListener("click", () => setMode("home"));
+
+document.querySelector(".nav-lineup")
+  .addEventListener("click", (e) => {
+    e.preventDefault();   // 
+    setMode("lineup");
+  });
+
+document.querySelector(".nav-gallery")
+  .addEventListener("click", () => setMode("gallery"));
 
 updateHeadlineOffset();
 window.addEventListener("resize", updateHeadlineOffset);
+
+
+// ---- overlay ----
+const overlay = document.getElementById("canvasOverlay");
+const ctx = overlay.getContext("2d");
+
+overlay.width = window.innerWidth;
+overlay.height = window.innerHeight;
+
+function drawOverlay() {
+  ctx.clearRect(0, 0, overlay.width, overlay.height);
+  ctx.fillStyle = "rgba(255, 149, 0, 1)";
+  requestAnimationFrame(drawOverlay);
+}
+
+drawOverlay();
+
+// ---- cursor light ----
+const cursorLight = new THREE.PointLight(0x00ffff, 500, 50, 2);
+cursorLight.castShadow = true;
+scene.add(cursorLight);
+
+cursorLight.decay = 1;
+cursorLight.intensity = 1500;
+
+// ---- CLICK EVENTS ----
+
+document.querySelector(".nav-link").addEventListener("click", () => {
+
+  gsap.to(camera.position, {
+    x: 0,
+    y: 20,
+    z: 30,
+    duration: 2
+  });
+
+});
+
 // ============================================
 // 1. SCENE
 // ============================================
@@ -43,7 +96,6 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
 directionalLight.position.set(0, 5, 5);
 scene.add(directionalLight);
 
-  //shadows
 directionalLight.castShadow = true;
 directionalLight.shadow.mapSize.width = 2048;
 directionalLight.shadow.mapSize.height = 2048;
@@ -54,9 +106,7 @@ directionalLight.shadow.camera.right = 50;
 directionalLight.shadow.camera.top = 50;
 directionalLight.shadow.camera.bottom = -50;
 
-
 // ---- font ----
-
 // const loader = new FontLoader();
 
 // loader.load(
@@ -104,7 +154,7 @@ const aspect = window.innerWidth / window.innerHeight;
 const near = 0.1;
 const far = 100;
 const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-camera.position.z = 60;
+camera.position.z = 40;
 
 // ============================================
 // 3. RENDERER
@@ -122,39 +172,53 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // 5. MATERIAL
 // ============================================
 
+ // ---- box --- 
+ const bgMaterial = new THREE.MeshPhongMaterial({
+  color: 0xa0adaf,
+  shininess: 10,
+  specular: 0x111111,
+  side: THREE.BackSide
+});
+
+// ---- feathers ----
+ const featherMaterial = new THREE.MeshStandardMaterial({
+        color: color,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.9
+    });
+
+const featherMat = new THREE.MeshStandardMaterial({
+    map: new THREE.TextureLoader().load("./public/img/feather.png"),
+    transparent: true,
+    alphaTest: 0.5,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+  
+ // ---- particle ----
+  const particleMaterial = new THREE.PointsMaterial({
+    color: 0xffee88,
+    size: 0.1,
+    transparent: true,
+    opacity: 0.3
+  });
+
+   // ---- light ----
+  const bulbMaterial = new THREE.MeshBasicMaterial({ color });
+
 // ============================================
 // 4. GEOMETRY
 // ============================================
-const overlay = document.getElementById("canvasOverlay");
-const ctx = overlay.getContext("2d");
-
-overlay.width = window.innerWidth;
-overlay.height = window.innerHeight;
-
-function drawOverlay() {
-  ctx.clearRect(0, 0, overlay.width, overlay.height);
-  ctx.fillStyle = "rgba(255, 149, 0, 1)";
-  requestAnimationFrame(drawOverlay);
-}
-
-drawOverlay();
-
 
 // ---- box ----
 const geometry = new THREE.SphereGeometry( 40, 46, 40 );
 //const geometry = new THREE.SphereGeometry( 50, 46, 50 );
 
-				const material = new THREE.MeshPhongMaterial({
-        color: 0xa0adaf,
-        shininess: 10,
-        specular: 0x111111,
-        side: THREE.BackSide
-      });
-
-				const mesh = new THREE.Mesh( geometry, material );
-				mesh.position.y = 0;
-				mesh.receiveShadow = true;
-				scene.add( mesh );
+const mesh = new THREE.Mesh( geometry, bgMaterial );
+mesh.position.y = 0;
+mesh.receiveShadow = true;
+scene.add( mesh );
 
 // ---- lamp ----
 
@@ -199,10 +263,11 @@ const geometry = new THREE.SphereGeometry( 40, 46, 40 );
 // });
 
 
-// ---- disko ball ----
+// ---- disco ball ----
 let discoBall;
+let spotLight;
 
-gltfLoader.load("./models/disco.glb", (gltf) => {
+gltfLoader.load("./public/models/disco.glb", (gltf) => {
 
   const discoBall = gltf.scene;
   discoBall.position.set(0, 20, 0);
@@ -216,14 +281,95 @@ gltfLoader.load("./models/disco.glb", (gltf) => {
     }
   });
 
-  scene.add(discoBall);
+scene.add(discoBall);
 
-  // ---- spotlight ----
+// ---- feathers ----
+function createFeatherMesh(color = 0xffffff) {
+  const geometry = new THREE.PlaneGeometry(0.2, 1);
+  const feather = new THREE.Mesh(geometry, featerMaterial);
+
+  feather.rotation.x = Math.random() * 2 * Math.PI;
+  feather.rotation.y = Math.random() * 2 * Math.PI;
+  feather.rotation.z = Math.random() * 2 * Math.PI;
+
+  feather.castShadow = true;
+  feather.receiveShadow = false;
+
+  return feather;
+}
+
+// ---- instancing ----
+const featherCount = 150;
+const featherGeo = new THREE.PlaneGeometry(0.2, 1);
+const feathers = new THREE.InstancedMesh(featherGeo, featherMat, featherCount);
+scene.add(feathers);
+
+const dummy = new THREE.Object3D();
+const featherData = []; // save position & velocity
+
+for (let i = 0; i < featherCount; i++) {
+    dummy.position.set(
+        (Math.random() - 0.5) * 80, 
+        Math.random() * 50, 
+        (Math.random() - 0.5) * 80
+    );
+
+    dummy.rotation.set(
+        Math.random() * 2 * Math.PI,
+        Math.random() * 2 * Math.PI,
+        Math.random() * 2 * Math.PI
+    );
+
+    dummy.updateMatrix();
+    feathers.setMatrixAt(i, dummy.matrix);
+
+    // save velocity & rotation speed for animation
+    featherData.push({
+        velocity: new THREE.Vector3(
+            (Math.random() - 0.5) * 0.05,
+            -Math.random() * 0.02,
+            (Math.random() - 0.5) * 0.05
+        ),
+        rotationSpeed: new THREE.Vector3(
+            Math.random() * 0.01,
+            Math.random() * 0.01,
+            Math.random() * 0.01
+        )
+    });
+}
+
+// ---- fog ----
+let allParticles; 
+const particleCount = 5000;
+const roomWidth = 100;
+const roomHeight = 100;
+const roomDepth = 100;
+
+const particleGeometry = new THREE.BufferGeometry();
+const particles = [];
+
+for (let i = 0; i < particleCount; i++) {
+  const x = (Math.random() - 0.5) * roomWidth;
+  const y = Math.random() * roomHeight;
+  const z = (Math.random() - 0.5) * roomDepth;
+  particles.push(x, y, z);
+}
+
+particleGeometry.setAttribute(
+  'position',
+  new THREE.Float32BufferAttribute(particles, 3)
+);
+
+const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+scene.add(particleSystem);
+
+
+// ---- spotlight ----
 const spotLight = new THREE.SpotLight(0xffffff, 2000);
 
 spotLight.position.set(0, 10, 0);
-spotLight.angle = Math.PI * 0.2;      // Öffnungswinkel
-spotLight.penumbra = 0.5;             // weiche Kante
+spotLight.angle = Math.PI * 0.2;      
+spotLight.penumbra = 0.5;// smoothness
 spotLight.decay = 2;
 spotLight.distance = 120;
 
@@ -234,147 +380,35 @@ spotLight.shadow.bias = -0.0005;
 
 scene.add(spotLight);
 scene.add(spotLight.target);
-
-
-});
-  // ---- feathers
-  function createFeatherMesh(color = 0xffffff) {
-    const geometry = new THREE.PlaneGeometry(0.2, 1);
-    const material = new THREE.MeshStandardMaterial({
-        color: color,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.9
-    });
-
-    const feather = new THREE.Mesh(geometry, material);
-
-    // rotation
-    feather.rotation.x = Math.random() * 2 * Math.PI;
-    feather.rotation.y = Math.random() * 2 * Math.PI;
-    feather.rotation.z = Math.random() * 2 * Math.PI;
-
-    feather.castShadow = true;
-    feather.receiveShadow = false;
-
-    return feather;
-  }
-
-  // instancing
-  const featherCount = 50;
-  const featherGeo = new THREE.PlaneGeometry(0.2, 1);
-const featherMat = new THREE.MeshStandardMaterial({
-  map: new THREE.TextureLoader().load("./img/feather.png"),
-  transparent: true,
-  alphaTest: 0.5,
-  side: THREE.DoubleSide,
-  depthWrite: false
 });
 
-  const feathers = new THREE.InstancedMesh(featherGeo, featherMat, featherCount);
-  scene.add(feathers);
-
-  const dummy = new THREE.Object3D();
-  const featherData = []; // speichert Position & Velocity
-
-  for (let i = 0; i < featherCount; i++) {
-      dummy.position.set(
-          (Math.random() - 0.5) * 80, 
-          Math.random() * 50, 
-          (Math.random() - 0.5) * 80
-      );
-
-      dummy.rotation.set(
-          Math.random() * 2 * Math.PI,
-          Math.random() * 2 * Math.PI,
-          Math.random() * 2 * Math.PI
-      );
-
-      dummy.updateMatrix();
-      feathers.setMatrixAt(i, dummy.matrix);
-
-      // velocity & rotation speed für Animation speichern
-      featherData.push({
-          velocity: new THREE.Vector3(
-              (Math.random() - 0.5) * 0.05,
-              -Math.random() * 0.02,
-              (Math.random() - 0.5) * 0.05
-          ),
-          rotationSpeed: new THREE.Vector3(
-              Math.random() * 0.01,
-              Math.random() * 0.01,
-              Math.random() * 0.01
-          )
-      });
-  }
-
-
-
-  // ---- fog ----
-  let allParticles; 
-  const particleCount = 5000;
-  const roomWidth = 100;
-  const roomHeight = 100;
-  const roomDepth = 100;
-
-  const particleGeometry = new THREE.BufferGeometry();
-  const particles = [];
-
-  for (let i = 0; i < particleCount; i++) {
-    const x = (Math.random() - 0.5) * roomWidth;
-    const y = Math.random() * roomHeight;
-    const z = (Math.random() - 0.5) * roomDepth;
-    particles.push(x, y, z);
-  }
-
-  particleGeometry.setAttribute(
-    'position',
-    new THREE.Float32BufferAttribute(particles, 3)
-  );
-
-  const particleMaterial = new THREE.PointsMaterial({
-    color: 0xffee88,
-    size: 0.1,
-    transparent: true,
-    opacity: 0.3
-  });
-
-  const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
-  scene.add(particleSystem);
-
-// ---- animated points
-
+// ---- animated pointlights ----
 function createMovingLight(color) {
 
-  const intensity = 800; // WebGL braucht weniger als WebGPU
-  const distance = 40;
+const intensity = 800; // WebGL braucht weniger als WebGPU
+const distance = 40;
+const light = new THREE.PointLight(color, intensity, distance, 2);
+light.castShadow = true;
 
-  const light = new THREE.PointLight(color, intensity, distance, 2);
-  light.castShadow = true;
+light.shadow.mapSize.width = 1024;
+light.shadow.mapSize.height = 1024;
+light.shadow.bias = -0.002;
+light.shadow.radius = 6;
 
-  light.shadow.mapSize.width = 1024;
-  light.shadow.mapSize.height = 1024;
-  light.shadow.bias = -0.002;
-  light.shadow.radius = 6;
+// center light
+const bulbGeometry = new THREE.SphereGeometry(0.5, 16, 8);
+const bulbMesh = new THREE.Mesh(bulbGeometry, bulbMaterial);
+light.add(bulbMesh);
 
-  // Kleine leuchtende Kugel im Zentrum
-  const bulbGeometry = new THREE.SphereGeometry(0.5, 16, 8);
-  const bulbMaterial = new THREE.MeshBasicMaterial({ color });
-  const bulbMesh = new THREE.Mesh(bulbGeometry, bulbMaterial);
-  light.add(bulbMesh);
-
-  return light;
+return light;
 }
 
 const pointLight1 = createMovingLightWithShell(0x0088ff);
-
 const pointLight2 = createMovingLight(0xff8844);
-
 scene.add(pointLight1);
 scene.add(pointLight2);
 
 function createStripedTexture() {
-
   const canvas = document.createElement("canvas");
   canvas.width = 4;
   canvas.height = 4;
@@ -383,8 +417,6 @@ function createStripedTexture() {
 
   context.fillStyle = "white";
   context.fillRect(0, 0, 4, 4);
-
-  // Schwarzer Streifen (Cutout)
   context.fillStyle = "black";
   context.fillRect(0, 2, 4, 2);
 
@@ -398,12 +430,10 @@ function createStripedTexture() {
 }
 
 
-
 function createMovingLightWithShell(color) {
 
   const intensity = 700;
   const distance = 50;
-
   const light = new THREE.PointLight(color, intensity, distance, 2);
   light.castShadow = true;
 
@@ -412,13 +442,13 @@ function createMovingLightWithShell(color) {
   light.shadow.bias = -0.002;
   light.shadow.radius = 6;
 
-  // 🔹 Leuchtkugel
+  // light
   const bulbGeo = new THREE.SphereGeometry(0.6, 16, 12);
   const bulbMat = new THREE.MeshBasicMaterial({ color });
   const bulb = new THREE.Mesh(bulbGeo, bulbMat);
   light.add(bulb);
 
-  // 🔹 Streifen-Shell
+  // shell
   const shellGeo = new THREE.SphereGeometry(4, 32, 16);
   //const alphaTexture = createStripedTexture();
 
@@ -429,10 +459,9 @@ function createMovingLightWithShell(color) {
   //   alphaTest: 0.5
   // });
 
-  // ---- PNG 
+  // ---- PNG texture ----
   const textureLoader = new THREE.TextureLoader();
-
-  const alphaTexture = textureLoader.load("./img/texture.png");
+  const alphaTexture = textureLoader.load("./public/img/texture.png");
 
   const shellMat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
@@ -443,47 +472,13 @@ function createMovingLightWithShell(color) {
     depthWrite: false
   });
 
-
   const shell = new THREE.Mesh(shellGeo, shellMat);
   shell.castShadow = true;
   shell.receiveShadow = true;
-
   light.add(shell);
-
   light.userData.shell = shell;
-
   return light;
 }
-
-// ---- cursor light ----
-
-const cursorLight = new THREE.PointLight(0x00ffff, 500, 50, 2);
-cursorLight.castShadow = true;
-scene.add(cursorLight);
-
-cursorLight.decay = 1;
-cursorLight.intensity = 1500;
-
-
-// ============================================
-// 6. MESH
-// ============================================
-
-
-
-//CLICK EVENTS
-
-document.querySelector(".nav-link").addEventListener("click", () => {
-
-  gsap.to(camera.position, {
-    x: 0,
-    y: 20,
-    z: 30,
-    duration: 2
-  });
-
-});
-
 
 
 // ============================================
@@ -497,26 +492,23 @@ function getVisibleSize(camera) {
   return { width, height };
 }
 
-
 function animate() {
 
   requestAnimationFrame(animate);
   controls.update();
 
-  // ---- discoball
-
+  // ---- discoball ----
   if (discoBall) {
   spotLight.target.position.copy(discoBall.position);
   }
 
+  // ---- lights -----
   const time = performance.now() * 0.001;
 
-  // ---- light 1
   pointLight1.position.x = Math.sin(time * 0.6) * 20;
   pointLight1.position.y = Math.sin(time * 0.7) * 10 + 15;
   pointLight1.position.z = Math.sin(time * 0.8) * 20;
 
-  // ---- light 2
   const t2 = time + 10;
 
   pointLight2.position.x = Math.sin(t2 * 0.6) * 20;
@@ -541,12 +533,11 @@ function animate() {
   //   lampMesh.rotation.y += 0.0005;
   // }
 
-  // ---- feathers
 
+  // ---- feathers ----
   for (let i = 0; i < featherCount; i++) {
     const data = featherData[i];
 
-    // korrekt: Matrix in Position/Rotation/Scale zerlegen
     feathers.getMatrixAt(i, dummy.matrix);
     dummy.matrix.decompose(dummy.position, dummy.quaternion, dummy.scale);
 
@@ -575,8 +566,7 @@ function animate() {
 feathers.instanceMatrix.needsUpdate = true;
 
 
-
-  // ---- cursor light
+  // ---- cursor light ----
   const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
   vector.unproject(camera);
 
@@ -585,26 +575,19 @@ feathers.instanceMatrix.needsUpdate = true;
 
   cursorLight.position.copy(camera.position).add(dir.multiplyScalar(distance));
 
-
-  // 1. Raycaster aktualisieren
+  // raycaster
   raycaster.setFromCamera(mouse, camera);
-
-  // 2. Schnittpunkte mit der Box (mesh) prüfen
   const intersects = raycaster.intersectObject(mesh);
 
   if (intersects.length > 0) {
       cursorLight.position.copy(intersects[0].point);
-  } else {
-
-    // fallback
+  } else { // fallback
     const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
     vector.unproject(camera);
     const dir = vector.sub(camera.position).normalize();
     const distance = 30;
     cursorLight.position.copy(camera.position).add(dir.multiplyScalar(distance));
-}
-
-
+  }
 
   renderer.render(scene, camera);
 }
@@ -620,13 +603,14 @@ function onWindowResize() {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
+  window.addEventListener("resize", onWindowResize);
 
-window.addEventListener("resize", onWindowResize);
-
-window.addEventListener("mousemove", (event) => {
-
+  window.addEventListener("mousemove", (event) => {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
 });
 
+
+
+// ---- EXPORTS ----
+export { camera, scene, discoBall, spotLight, pointLight1, pointLight2, ambientLight };
