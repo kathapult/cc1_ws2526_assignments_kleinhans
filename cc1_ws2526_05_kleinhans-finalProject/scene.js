@@ -5,6 +5,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import { gsap } from "gsap";
+import { initAudio, playAudio, getAudioData } from "./audio.js";
 
 const gltfLoader = new GLTFLoader();
 //const gui = new GUI();
@@ -35,16 +36,27 @@ document.querySelector(".nav-home")
 
 document.querySelector(".nav-lineup")
   .addEventListener("click", (e) => {
-    e.preventDefault();   // 
+
+    e.preventDefault();
+
+    // 🔓 AudioContext entsperren
+    const audioContext = THREE.AudioContext.getContext();
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+
+    // ▶ Audio starten
+    playAudio();
+
     setMode("lineup");
   });
-
 document.querySelector(".nav-gallery")
   .addEventListener("click", () => setMode("gallery"));
 
 updateHeadlineOffset();
 window.addEventListener("resize", updateHeadlineOffset);
 
+const djPult = document.querySelector(".DJpult");
 
 // ---- overlay ----
 const overlay = document.getElementById("canvasOverlay");
@@ -61,26 +73,19 @@ function drawOverlay() {
 
 drawOverlay();
 
-// ---- cursor light ----
-const cursorLight = new THREE.PointLight(0x00ffff, 500, 50, 2);
-cursorLight.castShadow = true;
-scene.add(cursorLight);
-
-cursorLight.decay = 1;
-cursorLight.intensity = 1500;
 
 // ---- CLICK EVENTS ----
 
-document.querySelector(".nav-link").addEventListener("click", () => {
+// document.querySelector(".nav-link").addEventListener("click", () => {
 
-  gsap.to(camera.position, {
-    x: 0,
-    y: 20,
-    z: 30,
-    duration: 2
-  });
+//   gsap.to(camera.position, {
+//     x: 0,
+//     y: 20,
+//     z: 30,
+//     duration: 2
+//   });
 
-});
+// });
 
 // ============================================
 // 1. SCENE
@@ -141,7 +146,6 @@ directionalLight.shadow.camera.bottom = -50;
 //     mesh.castShadow = true;    // dein Text oder Lampe
 //     mesh.receiveShadow = true; // Wände oder Kugel innen
 //     textMesh.castShadow = true;
-  
 //   }
 // );
 
@@ -154,7 +158,9 @@ const aspect = window.innerWidth / window.innerHeight;
 const near = 0.1;
 const far = 100;
 const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-camera.position.z = 40;
+camera.position.z = 50;
+
+initAudio(camera);
 
 // ============================================
 // 3. RENDERER
@@ -171,6 +177,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // ============================================
 // 5. MATERIAL
 // ============================================
+let color = 0xffffff;
 
  // ---- box --- 
  const bgMaterial = new THREE.MeshPhongMaterial({
@@ -179,6 +186,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   specular: 0x111111,
   side: THREE.BackSide
 });
+
 
 // ---- feathers ----
  const featherMaterial = new THREE.MeshStandardMaterial({
@@ -204,8 +212,7 @@ const featherMat = new THREE.MeshStandardMaterial({
     opacity: 0.3
   });
 
-   // ---- light ----
-  const bulbMaterial = new THREE.MeshBasicMaterial({ color });
+
 
 // ============================================
 // 4. GEOMETRY
@@ -241,35 +248,17 @@ scene.add( mesh );
 //     }
 //   });
 
-// // ---- lamp light 
-
-//   lampLight = new THREE.PointLight(0xC8ABFF, 200, 300, 2);
-
-//   lampLight.position.set(0, 13, 0);
-
-//   lampLight.castShadow = true;
-
-//   lampLight.shadow.mapSize.width = 1024;
-//   lampLight.shadow.mapSize.height = 1024;
-
-//   lampLight.shadow.bias = -0.003;
-//   lampLight.shadow.radius = 4;
-
-//   lampLight.shadow.camera.near = 0.5;
-//   lampLight.shadow.camera.far = 50;
-
-//   lampMesh.add(lampLight);
-
 // });
 
 
 // ---- disco ball ----
 let discoBall;
 let spotLight;
+let lampLight;
 
 gltfLoader.load("./public/models/disco.glb", (gltf) => {
 
-  const discoBall = gltf.scene;
+  discoBall = gltf.scene;
   discoBall.position.set(0, 20, 0);
   discoBall.scale.set(1, 1, 1);
 
@@ -281,22 +270,45 @@ gltfLoader.load("./public/models/disco.glb", (gltf) => {
     }
   });
 
-scene.add(discoBall);
+  scene.add(discoBall);
 
-// ---- feathers ----
-function createFeatherMesh(color = 0xffffff) {
-  const geometry = new THREE.PlaneGeometry(0.2, 1);
-  const feather = new THREE.Mesh(geometry, featerMaterial);
+// ---- lamp light 
 
-  feather.rotation.x = Math.random() * 2 * Math.PI;
-  feather.rotation.y = Math.random() * 2 * Math.PI;
-  feather.rotation.z = Math.random() * 2 * Math.PI;
+  lampLight = new THREE.PointLight(0xC8ABFF, 2000, 900, 2);
 
-  feather.castShadow = true;
-  feather.receiveShadow = false;
+  lampLight.position.set(0, 18, 0);
 
-  return feather;
-}
+  lampLight.castShadow = true;
+
+  lampLight.shadow.mapSize.width = 1024;
+  lampLight.shadow.mapSize.height = 1024;
+
+  lampLight.shadow.bias = -0.003;
+  lampLight.shadow.radius = 4;
+
+  lampLight.shadow.camera.near = 0.5;
+  lampLight.shadow.camera.far = 50;
+
+  scene.add(lampLight);
+
+
+  // ---- spotlight ----
+  spotLight = new THREE.SpotLight(0xffffff, 2000);
+
+  spotLight.position.set(0, 10, 0);
+  spotLight.angle = Math.PI * 0.2;      
+  spotLight.penumbra = 0.5;// smoothness
+  spotLight.decay = 2;
+  spotLight.distance = 120;
+
+  spotLight.castShadow = true;
+  spotLight.shadow.mapSize.width = 1024;
+  spotLight.shadow.mapSize.height = 1024;
+  spotLight.shadow.bias = -0.0005;
+
+  scene.add(spotLight);
+  scene.add(spotLight.target);
+});
 
 // ---- instancing ----
 const featherCount = 150;
@@ -363,24 +375,14 @@ particleGeometry.setAttribute(
 const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
 scene.add(particleSystem);
 
+// ---- cursor light ----
+const cursorLight = new THREE.PointLight(0x00ffff, 400, 30, 2);
+cursorLight.castShadow = true;
+scene.add(cursorLight);
 
-// ---- spotlight ----
-const spotLight = new THREE.SpotLight(0xffffff, 2000);
+cursorLight.decay = 1;
+cursorLight.intensity = 500;
 
-spotLight.position.set(0, 10, 0);
-spotLight.angle = Math.PI * 0.2;      
-spotLight.penumbra = 0.5;// smoothness
-spotLight.decay = 2;
-spotLight.distance = 120;
-
-spotLight.castShadow = true;
-spotLight.shadow.mapSize.width = 1024;
-spotLight.shadow.mapSize.height = 1024;
-spotLight.shadow.bias = -0.0005;
-
-scene.add(spotLight);
-scene.add(spotLight.target);
-});
 
 // ---- animated pointlights ----
 function createMovingLight(color) {
@@ -397,6 +399,7 @@ light.shadow.radius = 6;
 
 // center light
 const bulbGeometry = new THREE.SphereGeometry(0.5, 16, 8);
+const bulbMaterial = new THREE.MeshBasicMaterial({ color });
 const bulbMesh = new THREE.Mesh(bulbGeometry, bulbMaterial);
 light.add(bulbMesh);
 
@@ -404,32 +407,6 @@ return light;
 }
 
 const pointLight1 = createMovingLightWithShell(0x0088ff);
-const pointLight2 = createMovingLight(0xff8844);
-scene.add(pointLight1);
-scene.add(pointLight2);
-
-function createStripedTexture() {
-  const canvas = document.createElement("canvas");
-  canvas.width = 4;
-  canvas.height = 4;
-
-  const context = canvas.getContext("2d");
-
-  context.fillStyle = "white";
-  context.fillRect(0, 0, 4, 4);
-  context.fillStyle = "black";
-  context.fillRect(0, 2, 4, 2);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(1, 6); // Anzahl Streifen
-  texture.magFilter = THREE.NearestFilter;
-
-  return texture;
-}
-
-
 function createMovingLightWithShell(color) {
 
   const intensity = 700;
@@ -480,6 +457,31 @@ function createMovingLightWithShell(color) {
   return light;
 }
 
+const pointLight2 = createMovingLight(0xff8844);
+scene.add(pointLight1);
+scene.add(pointLight2);
+
+function createStripedTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 4;
+  canvas.height = 4;
+
+  const context = canvas.getContext("2d");
+
+  context.fillStyle = "white";
+  context.fillRect(0, 0, 4, 4);
+  context.fillStyle = "black";
+  context.fillRect(0, 2, 4, 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, 6); // Anzahl Streifen
+  texture.magFilter = THREE.NearestFilter;
+
+  return texture;
+}
+
 
 // ============================================
 // 7. RENDER LOOP
@@ -496,6 +498,15 @@ function animate() {
 
   requestAnimationFrame(animate);
   controls.update();
+
+   // ---- audio ----
+  const data = getAudioData();
+  const normalized = Math.pow(data / 256, 2);
+  const baseIntensity = 700;
+  const pulse = normalized * 400;
+
+pointLight1.intensity = baseIntensity + pulse;
+pointLight2.intensity = baseIntensity + pulse * 0.8;
 
   // ---- discoball ----
   if (discoBall) {
@@ -613,4 +624,4 @@ function onWindowResize() {
 
 
 // ---- EXPORTS ----
-export { camera, scene, discoBall, spotLight, pointLight1, pointLight2, ambientLight };
+export { camera, scene, djPult, discoBall, spotLight, lampLight, pointLight1, pointLight2, ambientLight };

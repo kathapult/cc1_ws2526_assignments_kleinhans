@@ -1,4 +1,5 @@
-import { scene, ambientLight, camera, discoBall, spotLight, pointLight1 } from "./scene.js";
+import * as THREE from "three";
+import { camera, scene, djPult, discoBall, spotLight, lampLight, pointLight1, pointLight2, ambientLight } from "./scene.js";
 import { gsap } from "gsap";
 
 let currentMode = "home";
@@ -17,23 +18,36 @@ function enterLineup() {
 
     console.log('enter LineUp')
 
-    gsap.to(ambientLight, {
-    intensity: 0.8,
-    duration: 1
+    gsap.to(djPult, {
+    y: 300,        
+    duration: 1.5,
+    ease: "power2.inOut"
     });
 
-    scene.fog.far = 60;
-
     gsap.to(camera.position, {
-    y: 25,
+    x: 0,
+    y: 20,
     z: 60,
     duration: 2,
     ease: "power2.inOut"
     });
 
+    gsap.to(ambientLight, {
+    intensity: 20,
+    duration: 1
+    });
+
+    gsap.to(lampLight, {
+    intensity: 40,
+    duration: 1
+    });
+
+    // scene.fog = new THREE.Fog(0x000000, 10, 100);
+    // scene.fog.far = 20;
+
   if (discoBall) {
     gsap.to(discoBall.position, {
-      y: 10,
+      //y: 25,
       duration: 2
     });
   }
@@ -44,11 +58,12 @@ function enterLineup() {
   });
 
   pointLight1.color.set(0xff00ff);
+  
   gsap.to(pointLight2.color, {
-  r: 1,
-  g: 0,
-  b: 1,
-  duration: 1
+        r: 1,
+        g: 0,
+        b: 1,
+        duration: 1
     });
 
     setTimeout(() => {
