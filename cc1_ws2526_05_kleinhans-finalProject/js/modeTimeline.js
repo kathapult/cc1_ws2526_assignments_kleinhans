@@ -4,11 +4,7 @@ import { showLineupArtists } from "./scene.js";
 
 let masterTL;
 let deps;
-let currentVisualMode = "home";
 
-export function setVisualMode(mode) {
-  currentVisualMode = mode;
-}
 
 
 export function initModeTimeline(dependencies) {
@@ -43,7 +39,7 @@ export function initModeTimeline(dependencies) {
   masterTL.to(deps.camera.position, { x: 0, y: 20, z: 60, duration: 2, ease: "power2.inOut" }, 1);
   masterTL.to(deps.djPult, { y: 400, duration: 1.5, ease: "power2.inOut" }, 1);
   masterTL.to(deps.ambientLight, { intensity: 20, duration: 1.5 }, 1);
-  masterTL.to(deps.spotLight, { intensity: 3000, duration: 1.5 }, 1);
+  masterTL.to(deps.spotLight, { intensity: 300, duration: 1.5 }, 1);
   if (deps.lampLight) masterTL.to(deps.lampLight, { intensity: 40, duration: 1.5 }, 1);
   masterTL.to(deps.pointLight1.color, { r: 1, g: 0, b: 1, duration: 1.5 }, 1);
   masterTL.to(deps.pointLight2.color, { r: 1, g: 0, b: 1, duration: 1.5 }, 1);
@@ -115,21 +111,18 @@ function onModeChange(mode) {
 // --------------------------------------------------
 export function goToMode(mode) {
   if (!masterTL) return;
-  if (currentVisualMode === mode) return;
+  if (document.body.dataset.mode === mode) return;
 
-  setVisualMode(mode);
+  deps.setVisualMode(mode);
 
-  // UI & Feather sofort setzen
   onModeChange(mode);
 
-  // Zielwerte je Modus
   const targetPositions = {
     home: { x: 0, y: 0, z: 50 },
     lineup: { x: 0, y: 20, z: 60 },
     gallery: { x: 0, y: 10, z: 40 },
   };
 
-  // Tween Kamera
   gsap.to(deps.camera.position, {
     x: targetPositions[mode].x,
     y: targetPositions[mode].y,
@@ -145,11 +138,14 @@ export function goToMode(mode) {
     }
   });
 
-  // Tween Ambient Light
   const lightTargets = {
     home: 0.5,
     lineup: 20,
     gallery: 5,
   };
-  gsap.to(deps.ambientLight, { intensity: lightTargets[mode], duration: 2 });
+
+  gsap.to(deps.ambientLight, {
+    intensity: lightTargets[mode],
+    duration: 2
+  });
 }

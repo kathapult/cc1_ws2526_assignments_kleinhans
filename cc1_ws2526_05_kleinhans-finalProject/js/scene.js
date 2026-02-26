@@ -26,6 +26,10 @@ console.log(THREE);
 
 let currentVisualMode = "home";
 
+export function setVisualMode(mode) {
+  currentVisualMode = mode;
+}
+
 
 // ---- navbar ----
 const navbar = document.querySelector(".navbar");
@@ -41,7 +45,7 @@ function updateHeadlineOffset() {
 // 1. SCENE
 // ============================================
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x000000, 10, 100); 
+//scene.fog = new THREE.Fog(0x000000, 10, 100); 
 
 // ---- light ----
 const ambientLight = new THREE.AmbientLight(0xff8800, 0.4);
@@ -131,15 +135,7 @@ const featherMat = new THREE.MeshStandardMaterial({
 
 // ---- box ----
 const geometry = new THREE.SphereGeometry( 40, 46, 40 );
-// const geometry = new THREE.SphereGeometry(40, 64, 64);
-
 const mesh = new THREE.Mesh(geometry, bgMaterial);
-
-// mesh.scale.y = 1.3;   // höher
-// mesh.scale.x = 0.9;   // schmaler
-// mesh.scale.z = 0.9;
-
-
 mesh.position.y = 0;
 mesh.receiveShadow = true;
 scene.add( mesh );
@@ -176,7 +172,7 @@ let lampLight;
 
 // ---- lamp light 
 
-  lampLight = new THREE.PointLight(0xC8ABFF, 2000, 900, 2);
+  lampLight = new THREE.PointLight(0xC8ABFF, 200, 900, 2);
 
   lampLight.position.set(0, 18, 0);
 
@@ -370,8 +366,8 @@ function createMovingLightWithShell(color) {
 
 const pointLight2 = createMovingLight(0xff8844);
 
-pointLight1.userData.baseIntensity = 700;
-pointLight2.userData.baseIntensity = 800;
+pointLight1.userData.baseIntensity = 300;
+pointLight2.userData.baseIntensity = 300;
 
 scene.add(pointLight1);
 scene.add(pointLight2);
@@ -430,7 +426,9 @@ if (currentVisualMode === "lineup") {
   const audio = getAudioData();
   normalized = Math.pow(audio / 128, 2);
 
-  const pulseStrength = 0.6;
+  const pulseStrength = 10.6;
+
+  
 
   pointLight1.intensity = pointLight1.userData.baseIntensity * (1 + normalized * pulseStrength);
   pointLight2.intensity = pointLight2.userData.baseIntensity * (1 + normalized * pulseStrength);
@@ -460,7 +458,8 @@ if (currentVisualMode === "lineup") {
     pointLight1.userData.shell.rotation.x += 0.01;
     pointLight1.userData.shell.rotation.z += 0.01;
   }
-
+   
+  
   // =====================================
   // DISCO TARGET
   // =====================================
@@ -665,7 +664,7 @@ export { camera, scene, djPult, discoBall, spotLight, lampLight, pointLight1, po
 
 // --- am Ende von scene.js ---
 
-import { initModeTimeline, goToMode, setVisualMode } from "./modeTimeline.js";
+import { initModeTimeline, goToMode } from "./modeTimeline.js";
 
 
 function initTimelinesWhenReady() {
@@ -716,16 +715,17 @@ const navLineup = document.querySelector(".nav-lineup");
 const navGallery = document.querySelector(".nav-gallery");
 
 if (navHome) navHome.addEventListener("click", () => {
-  console.log("Home-Mode ausgewählt");
+  console.log("Home-Mode");
   goToMode("home");
 });
 
 if (navLineup) navLineup.addEventListener("click", () => {
-  console.log("Lineup-Mode ausgewählt");
+  console.log("Lineup-Mode");
   goToMode("lineup");
 });
 
 if (navGallery) navGallery.addEventListener("click", () => {
-  console.log("Gallery-Mode ausgewählt");
+  console.log("Gallery-Mode");
   goToMode("gallery");
 });
+
