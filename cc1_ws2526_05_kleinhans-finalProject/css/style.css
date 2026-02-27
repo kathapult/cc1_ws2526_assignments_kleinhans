@@ -17,8 +17,8 @@ a {
 
 #canvasThree {
   display: block;
-  width: 100%;
-  /* height: 100%;
+  /*width: 100%;
+   height: 100%;
   position: fixed;
   inset: 0;
   z-index: 1; */
@@ -27,8 +27,8 @@ a {
 #uiCanvas {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
+  /* width: 100vw;
+  height: 100vh; */
   z-index: 9999;
   pointer-events: none;  
 }
@@ -63,7 +63,7 @@ a {
 }
 
 .navbar .nav-link:hover {
-  color: #000000 !important;
+  color:  rgb(148, 84, 196)!important;
 }
 
 h1 {
@@ -168,17 +168,22 @@ h1 {
 
 .lineup-section {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 0 auto;
+  flex-direction: column;
+
+  z-index: 2000; /* WICHTIG */
+
   opacity: 0;
   transform: translateY(50px);
 
   transition: 0.8s ease;
-  width: 60%;
-   flex-direction:row;
 }
 
 .artist-list {
@@ -227,7 +232,7 @@ body[data-mode="lineup"] .lineup-section {
   transition: 0.3s ease;
 }
 .artist-name:hover {
-  color: rgb(34, 19, 207);
+  color: rgb(148, 84, 196)!important;
 }
 
 .artist-img {

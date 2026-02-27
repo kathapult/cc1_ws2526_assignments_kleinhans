@@ -21,6 +21,7 @@ const renderer = new THREE.WebGLRenderer({
 });
 
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 const cursorChicken = new Chicken({ spacing: 60, scale: 1 });
 scene.add(cursorChicken.group);
@@ -48,6 +49,7 @@ window.addEventListener("click", () => {
 
 function resizeUI() {
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
   camera.left = window.innerWidth / -2;
   camera.right = window.innerWidth / 2;
@@ -56,7 +58,6 @@ function resizeUI() {
 
   camera.updateProjectionMatrix();
 }
-
 window.addEventListener("resize", resizeUI);
 resizeUI();
 

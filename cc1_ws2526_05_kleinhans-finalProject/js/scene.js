@@ -6,30 +6,19 @@ import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import { gsap } from "gsap";
 import { initAudio, playAudio, getAudioData } from "./audio.js";
+import { initModeTimeline, goToMode } from "./modeTimeline.js";
 
-
+console.log(THREE);
 
 const gltfLoader = new GLTFLoader();
 //const gui = new GUI();
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-console.log(THREE);
-
 
 // ============================================
 // LAYOUT / UI / MODES
 // ============================================
-// ===============================
-// VISUAL MODE STATE
-// ===============================
-
-let currentVisualMode = "home";
-
-export function setVisualMode(mode) {
-  currentVisualMode = mode;
-}
-
 
 // ---- navbar ----
 const navbar = document.querySelector(".navbar");
@@ -39,7 +28,35 @@ function updateHeadlineOffset() {
   const navHeight = navbar.offsetHeight;
   headline.style.top = navHeight + 30 + "px";
 }
-  
+
+// ---- mode state for scene switch ---- 
+let currentVisualMode = "home";
+
+export function setVisualMode(mode) {
+  currentVisualMode = mode;
+}
+
+
+// ---- SET MODES Navigation ----
+const navHome = document.querySelector(".nav-home");
+const navLineup = document.querySelector(".nav-lineup");
+const navGallery = document.querySelector(".nav-gallery");
+
+if (navHome) navHome.addEventListener("click", () => {
+  console.log("Home-Mode");
+  goToMode("home");
+});
+
+if (navLineup) navLineup.addEventListener("click", () => {
+  console.log("Lineup-Mode");
+  goToMode("lineup");
+});
+
+if (navGallery) navGallery.addEventListener("click", () => {
+  console.log("Gallery-Mode");
+  goToMode("gallery");
+});
+
 
 // ============================================
 // 1. SCENE
@@ -49,9 +66,10 @@ const scene = new THREE.Scene();
 
 // ---- light ----
 const ambientLight = new THREE.AmbientLight(0xff8800, 0.4);
-scene.add(ambientLight);
+//scene.add(ambientLight);
+ambientLight.userData.baseIntensity = 0.5;
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
 directionalLight.position.set(0, 5, 5);
 scene.add(directionalLight);
 
@@ -102,7 +120,6 @@ let color = 0xffffff;
   side: THREE.BackSide
 });
 
-
 // ---- feathers ----
  const featherMaterial = new THREE.MeshStandardMaterial({
         color: color,
@@ -128,41 +145,16 @@ const featherMat = new THREE.MeshStandardMaterial({
   });
 
 
-
 // ============================================
 // 4. GEOMETRY
 // ============================================
 
 // ---- box ----
-const geometry = new THREE.SphereGeometry( 40, 46, 40 );
+const geometry = new THREE.SphereGeometry( 40, 60, 40 );
 const mesh = new THREE.Mesh(geometry, bgMaterial);
 mesh.position.y = 0;
 mesh.receiveShadow = true;
 scene.add( mesh );
-
-// ---- lamp ----
-
-// let lampMesh;
-// let lampLight;
-
-// gltfLoader.load("./models/lamp.glb", (gltf) => {
-
-//   lampMesh = gltf.scene;
-//   lampMesh.scale.set(1, 1, 1);
-//   lampMesh.position.set(0, 0, 0);
-//   scene.add(lampMesh);
-
-//   // shadow-caster
-//   lampMesh.traverse((child) => {
-//     if (child.isMesh) {
-//       child.castShadow = true;
-//       child.receiveShadow = false; 
-//       child.material.side = THREE.FrontSide;
-//     }
-//   });
-
-// });
-
 
 // ---- disco ball ----
 let discoBall;
@@ -170,28 +162,22 @@ let spotLight;
 let lampLight;
 
 
-// ---- lamp light 
-
+// ---- lamp light ----
   lampLight = new THREE.PointLight(0xC8ABFF, 200, 900, 2);
-
   lampLight.position.set(0, 18, 0);
-
   lampLight.castShadow = true;
 
   lampLight.shadow.mapSize.width = 1024;
   lampLight.shadow.mapSize.height = 1024;
-
   lampLight.shadow.bias = -0.003;
   lampLight.shadow.radius = 4;
-
   lampLight.shadow.camera.near = 0.5;
   lampLight.shadow.camera.far = 50;
 
-  scene.add(lampLight);
-
+  //scene.add(lampLight);
 
   // ---- spotlight ----
-  spotLight = new THREE.SpotLight(0xffffff, 2000);
+  spotLight = new THREE.SpotLight(0xffffff, 200);
 
   spotLight.position.set(0, 10, 0);
   spotLight.angle = Math.PI * 0.2;      
@@ -202,14 +188,13 @@ let lampLight;
   spotLight.castShadow = true;
   spotLight.shadow.mapSize.width = 1024;
   spotLight.shadow.mapSize.height = 1024;
-  spotLight.shadow.bias = -0.0005;
+  spotLight.shadow.bias = -0.0001;
 
   scene.add(spotLight);
   scene.add(spotLight.target);
 
 
-
-// ---- instancing ----
+// ---- feather instancing ----
 let featherSpeed = 0.01;
 let lightSpeed = 0.02;
 
@@ -218,7 +203,7 @@ const motion = {
   featherWindFactor: 1
 };
 
-const featherCount = 150;
+const featherCount = 300;
 const featherGeo = new THREE.PlaneGeometry(0.2, 1);
 const feathers = new THREE.InstancedMesh(featherGeo, featherMat, featherCount);
 scene.add(feathers);
@@ -263,7 +248,6 @@ const particleCount = 5000;
 const roomWidth = 100;
 const roomHeight = 100;
 const roomDepth = 100;
-
 const particleGeometry = new THREE.BufferGeometry();
 const particles = [];
 
@@ -285,10 +269,10 @@ scene.add(particleSystem);
 // ---- cursor light ----
 const cursorLight = new THREE.PointLight(0x00ffff, 400, 30, 2);
 cursorLight.castShadow = true;
-scene.add(cursorLight);
+cursorLight.decay = 2;
+cursorLight.intensity = 300;
 
-cursorLight.decay = 1;
-cursorLight.intensity = 500;
+scene.add(cursorLight);
 
 
 // ---- animated pointlights ----
@@ -313,7 +297,10 @@ function createMovingLight(color) {
   return light;
 }
 
+// ----- light shell texture -----
 const pointLight1 = createMovingLightWithShell(0x0088ff);
+const pointLight2 = createMovingLight(0xff8844);
+
 function createMovingLightWithShell(color) {
 
   let intensity = 700;
@@ -332,10 +319,11 @@ function createMovingLightWithShell(color) {
   const bulb = new THREE.Mesh(bulbGeo, bulbMat);
   light.add(bulb);
 
-  // shell
+  // shell texture
   const shellGeo = new THREE.SphereGeometry(4, 32, 16);
-  //const alphaTexture = createStripedTexture();
 
+  // ---- gernerated texture ----
+  //const alphaTexture = createStripedTexture();
   // const shellMat = new THREE.MeshStandardMaterial({
   //   color: color,
   //   side: THREE.DoubleSide,
@@ -343,7 +331,7 @@ function createMovingLightWithShell(color) {
   //   alphaTest: 0.5
   // });
 
-  // ---- PNG texture ----
+  // PNG texture
   const textureLoader = new THREE.TextureLoader();
   const alphaTexture = textureLoader.load("./assets/img/texture.png");
 
@@ -364,37 +352,11 @@ function createMovingLightWithShell(color) {
   return light;
 }
 
-const pointLight2 = createMovingLight(0xff8844);
-
 pointLight1.userData.baseIntensity = 300;
 pointLight2.userData.baseIntensity = 300;
 
 scene.add(pointLight1);
 scene.add(pointLight2);
-
-
-
-function createStripedTexture() {
-  const canvas = document.createElement("canvas");
-  canvas.width = 4;
-  canvas.height = 4;
-
-  const context = canvas.getContext("2d");
-
-  context.fillStyle = "white";
-  context.fillRect(0, 0, 4, 4);
-  context.fillStyle = "black";
-  context.fillRect(0, 2, 4, 2);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(1, 6); // Anzahl Streifen
-  texture.magFilter = THREE.NearestFilter;
-
-  return texture;
-}
-
 
 
 // ============================================
@@ -415,35 +377,26 @@ function animate() {
 
   const time = performance.now() * 0.001;
 
-  // =====================================
-  // MODE BASED AUDIO + LIGHT CONTROL
-  // =====================================
+  // ----- MODE BASED AUDIO + LIGHT CONTROL ----- 
+  let normalized = 0;
 
-// Pulse und Audio nur abhängig von currentVisualMode
-let normalized = 0;
+  if (currentVisualMode === "lineup") {
+    const audio = getAudioData();
+    normalized = Math.pow(audio / 128, 2);
+    const pulseStrength = 10.6; // pulse
 
-if (currentVisualMode === "lineup") {
-  const audio = getAudioData();
-  normalized = Math.pow(audio / 128, 2);
+    pointLight1.intensity = pointLight1.userData.baseIntensity * (1 + normalized * pulseStrength);
+    pointLight2.intensity = pointLight2.userData.baseIntensity * (1 + normalized * pulseStrength);
+    //ambientLight.intensity = 5 + normalized * 15;
+    ambientLight.intensity = ambientLight.userData.baseIntensity * (1 + normalized * 0.5);
 
-  const pulseStrength = 10.6;
+    if (pointLight1.userData.shell) {
+      const scale = 1 + normalized * 2;
+      pointLight1.userData.shell.scale.set(scale, scale, scale);
+    }
+  } 
 
-  
-
-  pointLight1.intensity = pointLight1.userData.baseIntensity * (1 + normalized * pulseStrength);
-  pointLight2.intensity = pointLight2.userData.baseIntensity * (1 + normalized * pulseStrength);
-  ambientLight.intensity = 5 + normalized * 15;
-
-  if (pointLight1.userData.shell) {
-    const scale = 1 + normalized * 2;
-    pointLight1.userData.shell.scale.set(scale, scale, scale);
-  }
-} 
-
-  // =====================================
-  // LIGHT MOVEMENT (always running)
-  // =====================================
-
+   // ----- GENERAL LIGHT MOVEMENT ----- 
   pointLight1.position.x = Math.sin(time * 0.6) * 20;
   pointLight1.position.y = Math.sin(time * 0.7) * 10 + 15;
   pointLight1.position.z = Math.sin(time * 0.8) * 20;
@@ -459,62 +412,50 @@ if (currentVisualMode === "lineup") {
     pointLight1.userData.shell.rotation.z += 0.01;
   }
    
-  
-  // =====================================
-  // DISCO TARGET
-  // =====================================
-
+  // ----- DISCO SPOTLIGHT TARGET ----- 
   if (discoBall) {
     spotLight.target.position.copy(discoBall.position);
   }
 
-  // =====================================
-  // FEATHERS
-  // =====================================
-for (let i = 0; i < featherCount; i++) {
-  const data = featherData[i];
+  // ----- FEATHERS -----
+  for (let i = 0; i < featherCount; i++) {
+    const data = featherData[i];
 
-  feathers.getMatrixAt(i, dummy.matrix);
-  dummy.matrix.decompose(dummy.position, dummy.quaternion, dummy.scale);
+    feathers.getMatrixAt(i, dummy.matrix);
+    dummy.matrix.decompose(dummy.position, dummy.quaternion, dummy.scale);
+    dummy.position.add(data.velocity);
 
-  // Position update
-  dummy.position.add(data.velocity);
+    // rotation
+    dummy.rotateX(data.rotationSpeed.x * motion.featherRotationFactor);
+    dummy.rotateY(data.rotationSpeed.y * motion.featherRotationFactor);
+    dummy.rotateZ(data.rotationSpeed.z * motion.featherRotationFactor);
 
-  // Rotation
-  dummy.rotateX(data.rotationSpeed.x * motion.featherRotationFactor);
-  dummy.rotateY(data.rotationSpeed.y * motion.featherRotationFactor);
-  dummy.rotateZ(data.rotationSpeed.z * motion.featherRotationFactor);
+    // wind & random motion
+    data.velocity.x += Math.sin(time + i) * 0.0007 * motion.featherWindFactor;
+    data.velocity.z += Math.cos(time + i) * 0.0007 * motion.featherWindFactor;
 
-  // Wind / random motion
-  data.velocity.x += Math.sin(time + i) * 0.0007 * motion.featherWindFactor;
-  data.velocity.z += Math.cos(time + i) * 0.0007 * motion.featherWindFactor;
+    // reset y
+    if (dummy.position.y < 0) {
+      dummy.position.y = 50;
+      dummy.position.x = (Math.random() - 0.5) * 80;
+      dummy.position.z = (Math.random() - 0.5) * 80;
+    }
+    
+    let scale = 1; // scale pulse depending on mode
+    if (currentVisualMode === "lineup") {
+      scale = 1 + normalized * 2;
+    }
 
-  // Reset y
-  if (dummy.position.y < 0) {
-    dummy.position.y = 50;
-    dummy.position.x = (Math.random() - 0.5) * 80;
-    dummy.position.z = (Math.random() - 0.5) * 80;
+    dummy.scale.set(scale, scale, scale);
+    dummy.updateMatrix();
+    feathers.setMatrixAt(i, dummy.matrix);
   }
 
-  // Scale pulse depending on mode
-  let scale = 1;
-  if (currentVisualMode === "lineup") {
-    scale = 1 + normalized * 2; // normalized aus Audio
-  }
+  feathers.instanceMatrix.needsUpdate = true;
 
-  dummy.scale.set(scale, scale, scale);
-  dummy.updateMatrix();
-  feathers.setMatrixAt(i, dummy.matrix);
-}
-feathers.instanceMatrix.needsUpdate = true;
-
-  // =====================================
-  // CURSOR LIGHT
-  // =====================================
-
+  // ----- CURSOR LIGHT ----- 
   const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
   vector.unproject(camera);
-
   const dir = vector.sub(camera.position).normalize();
   const distance = 30;
 
@@ -527,7 +468,9 @@ feathers.instanceMatrix.needsUpdate = true;
     cursorLight.position.copy(intersects[0].point);
   }
 
+
   renderer.render(scene, camera);
+
 }
 
 animate();
@@ -547,8 +490,6 @@ function onWindowResize() {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 });
-
-
 
 updateHeadlineOffset();
 window.addEventListener("resize", updateHeadlineOffset);
@@ -571,24 +512,25 @@ drawOverlay();
 
 
 
+
+// ============================================
+// EXPORTS
+// ============================================
+// ---- LINE UP artist animation -----
 export function showLineupArtists() {
+
   console.log("showLineupArtists called"); // DEBUG
-  console.log('showLineup')
+
   const lineupSection = document.querySelector(".lineup-section");
   const tboard = lineupSection?.querySelector(".lineup-tboard");
 
   if (!lineupSection || !tboard) return;
 
-  // Section sichtbar machen
-  lineupSection.style.opacity = 1;
-  lineupSection.style.pointerEvents = "auto";
-  lineupSection.style.position = "relative"; // wichtig für absolute Bilder
+  // remove old img
+  // const existingImages = lineupSection.querySelectorAll(".artist-image");
+  // existingImages.forEach(img => img.remove());
 
-  // Alte Bilder entfernen
-  const existingImages = lineupSection.querySelectorAll(".artist-image");
-  existingImages.forEach(img => img.remove());
-
-  // Bilder einfügen
+  // add img
   const artists = [
     {
       id: 0,
@@ -621,9 +563,8 @@ export function showLineupArtists() {
     img.src = artist.src;
     img.alt = artist.name;
     img.classList.add("artist-image");
-    img.dataset.artistId = artist.id; // wichtig für Hover
+    img.dataset.artistId = artist.id; // hover initialization
 
-    // absolute Positionierung
     img.style.position = "absolute";
     img.style.left = artist.left;
     img.style.top = artist.top;
@@ -645,7 +586,7 @@ export function showLineupArtists() {
 
     lineupSection.appendChild(img);
 
-    // Fade-In
+    // fade-In
     gsap.to(img, {
       opacity: 1,
       duration: 1,
@@ -657,16 +598,30 @@ export function showLineupArtists() {
 
 
 
+// Lade Disco-Ball einmalig, danach Timeline starten
+if (!discoBall) {
+  gltfLoader.load("./assets/models/disco.glb", (gltf) => {
+    discoBall = gltf.scene;
+    discoBall.position.set(0, 15, 0);
+    discoBall.scale.set(1, 1, 1);
+
+    discoBall.traverse((child) => {
+      if (child.isMesh) {
+        child.material.metalness = 1;
+        child.material.roughness = 0.1;
+      }
+    });
+
+    scene.add(discoBall);
+    spotLight.target.position.copy(discoBall.position);
+
+    initTimelinesWhenReady();
+  });
+}
+
+
+// ---- start timeline ----
 const djPult = document.querySelector(".DJpult");
-// ---- EXPORTS ----
-export { camera, scene, djPult, discoBall, spotLight, lampLight, pointLight1, pointLight2, ambientLight, motion };
-
-
-// --- am Ende von scene.js ---
-
-import { initModeTimeline, goToMode } from "./modeTimeline.js";
-
-
 function initTimelinesWhenReady() {
   if (!camera || !djPult || !ambientLight || !spotLight || !lampLight || !pointLight1 || !pointLight2 || !discoBall) return;
 
@@ -685,47 +640,8 @@ function initTimelinesWhenReady() {
   });
 }
 
-// Lade Disco-Ball einmalig, danach Timeline starten
-gltfLoader.load("./assets/models/disco.glb", (gltf) => {
-  discoBall = gltf.scene;
-  discoBall.position.set(0, 15, 0);
-  discoBall.scale.set(1, 1, 1);
 
-  discoBall.traverse((child) => {
-    if (child.isMesh) {
-      child.material.metalness = 1;
-      child.material.roughness = 0.1;
-    }
-  });
+// ---- EXPORTS ----
+export { camera, scene, djPult, discoBall, spotLight, lampLight, pointLight1, pointLight2, ambientLight, motion };
 
-  scene.add(discoBall);
-
-  // SpotLight bereits definiert -> nur Target setzen
-  spotLight.target.position.copy(discoBall.position);
-
-  // LampLight & SpotLight sind schon erstellt -> nichts doppelt hinzufügen
-
-  // Timeline starten
-  initTimelinesWhenReady();
-});
-
-// Navbar
-const navHome = document.querySelector(".nav-home");
-const navLineup = document.querySelector(".nav-lineup");
-const navGallery = document.querySelector(".nav-gallery");
-
-if (navHome) navHome.addEventListener("click", () => {
-  console.log("Home-Mode");
-  goToMode("home");
-});
-
-if (navLineup) navLineup.addEventListener("click", () => {
-  console.log("Lineup-Mode");
-  goToMode("lineup");
-});
-
-if (navGallery) navGallery.addEventListener("click", () => {
-  console.log("Gallery-Mode");
-  goToMode("gallery");
-});
 

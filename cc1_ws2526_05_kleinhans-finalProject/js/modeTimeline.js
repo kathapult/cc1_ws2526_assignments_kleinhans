@@ -5,8 +5,6 @@ import { showLineupArtists } from "./scene.js";
 let masterTL;
 let deps;
 
-
-
 export function initModeTimeline(dependencies) {
   deps = dependencies;
 
@@ -14,11 +12,11 @@ export function initModeTimeline(dependencies) {
 
   
   // --------------------------------------------------
-  // HOME Snapshot
+  // HOME
   // --------------------------------------------------
   masterTL.addLabel("home", 0);
-  masterTL.set(deps.camera.position, { x: 0, y: 0, z: 50 }, 0);
-  masterTL.set(deps.djPult, { y: 0 }, 0);
+  masterTL.set(deps.camera.position, { x: 0, y: 0, z: 60 }, 0);
+  masterTL.set(deps.djPult.position, { y: 0 }, 0);
   masterTL.set(deps.ambientLight, { intensity: 0.5 }, 0);
   masterTL.set(deps.spotLight, { intensity: 500 }, 0);
   if (deps.lampLight) masterTL.set(deps.lampLight, { intensity: 1 }, 0);
@@ -27,39 +25,64 @@ export function initModeTimeline(dependencies) {
   masterTL.set(deps.pointLight2, { intensity: deps.pointLight2.userData.baseIntensity }, 0);
   masterTL.set(deps.pointLight2.color, { r: 1, g: 1, b: 1 }, 0);
   if (deps.pointLight1.userData.shell) deps.pointLight1.userData.shell.scale.set(1, 1, 1);
-  if (deps.scene.fog) deps.scene.fog.far = 100;
+  if (deps.scene.fog) deps.scene.fog.far = 10;
   deps.motion.featherRotationFactor = 1;
   deps.motion.featherWindFactor = 1;
 
   // --------------------------------------------------
-  // LINEUP Snapshot
+  // LINEUP
   // --------------------------------------------------
   masterTL.addLabel("lineup", 1);
 
-  masterTL.to(deps.camera.position, { x: 0, y: 20, z: 60, duration: 2, ease: "power2.inOut" }, 1);
-  masterTL.to(deps.djPult, { y: 400, duration: 1.5, ease: "power2.inOut" }, 1);
+  masterTL.to(deps.camera.position, { 
+    x: 0, 
+    y: 0, 
+    z: 30, 
+    duration: 2, 
+    ease: "power2.inOut" }, 1);
+
+  masterTL.to(deps.djPult.position, { y: 10, duration: 1.5, ease: "power2.inOut" }, 1);
   masterTL.to(deps.ambientLight, { intensity: 20, duration: 1.5 }, 1);
-  masterTL.to(deps.spotLight, { intensity: 300, duration: 1.5 }, 1);
+
+  masterTL.to(deps.spotLight, {
+  intensity: 0,
+  duration: 1.5
+}, 1);
+
   if (deps.lampLight) masterTL.to(deps.lampLight, { intensity: 40, duration: 1.5 }, 1);
   masterTL.to(deps.pointLight1.color, { r: 1, g: 0, b: 1, duration: 1.5 }, 1);
   masterTL.to(deps.pointLight2.color, { r: 1, g: 0, b: 1, duration: 1.5 }, 1);
   if (deps.pointLight1.userData.shell) masterTL.to(deps.pointLight1.userData.shell.scale, { x: 2, y: 2, z: 2, duration: 1.5 }, 1);
   masterTL.call(() => { if (deps.discoBall) deps.spotLight.target.position.copy(deps.discoBall.position); }, null, 1);
-
+  
   // Feather Werte sofort setzen
   masterTL.set(deps.motion, { featherRotationFactor: 1, featherWindFactor: 1 }, 1);
 
-  // Call: Lineup Bilder anzeigen **erst hier**
+  // Call: Lineup Bilder anzeigen 
   masterTL.call(() => {
+    console.log('LineUp Artists called')
     showLineupArtists();
-  }, null, 2); // 2 Sekunden nach Label "lineup"
+  }, null, 1);
+
+    masterTL.to(deps.spotLight, {
+    intensity: 0,
+    duration: 1.5
+    }, 1);
+
+    // masterTL.to(deps.bgSphere.scale, {
+    // x: 3,
+    // y: 3,
+    // z: 3,
+    // duration: 1.5,
+    // ease: "power2.inOut"
+    // }, 1);
 
   // --------------------------------------------------
-  // GALLERY Snapshot
+  // GALLERY 
   // --------------------------------------------------
   masterTL.addLabel("gallery", 2);
-  masterTL.to(deps.camera.position, { x: 0, y: 10, z: 40, duration: 2, ease: "power2.inOut" }, 2);
-  masterTL.to(deps.djPult, { y: 280, duration: 1.5, ease: "power2.inOut" }, 2);
+  masterTL.to(deps.camera.position, { x: 0, y: 20, z: 6, duration: 2, ease: "power2.inOut" }, 2);
+  masterTL.to(deps.djPult.position, { y: 280, duration: 1.5, ease: "power2.inOut" }, 2);
   masterTL.to(deps.ambientLight, { intensity: 5, duration: 1.5 }, 2);
   masterTL.to(deps.spotLight, { intensity: 200, duration: 1.5 }, 2);
   if (deps.lampLight) masterTL.to(deps.lampLight, { intensity: 10, duration: 1.5 }, 2);
@@ -104,10 +127,11 @@ function onModeChange(mode) {
 
   if (mode === "lineup") playAudio();
   else stopAudio();
+  showLineupArtists(); 
 }
 
 // --------------------------------------------------
-// Sanfter Moduswechsel garantiert exakt
+// soft mode change
 // --------------------------------------------------
 export function goToMode(mode) {
   if (!masterTL) return;
@@ -118,10 +142,12 @@ export function goToMode(mode) {
   onModeChange(mode);
 
   const targetPositions = {
-    home: { x: 0, y: 0, z: 50 },
-    lineup: { x: 0, y: 20, z: 60 },
-    gallery: { x: 0, y: 10, z: 40 },
+    home: { x: 0, y: 0, z: 60 },
+    lineup: { x: 0, y: 0, z: 30 },
+    gallery: { x: 0, y: 20, z: 6 },
+    //gallery: { x: 0, y: -10, z: 0 },
   };
+  
 
   gsap.to(deps.camera.position, {
     x: targetPositions[mode].x,
@@ -148,4 +174,18 @@ export function goToMode(mode) {
     intensity: lightTargets[mode],
     duration: 2
   });
+
+    const djTargets = {
+    home: 0,
+    lineup: 200,
+    gallery: 450,
+    };
+
+   gsap.to(deps.djPult, {
+    y: djTargets[mode],
+    duration: 2,
+    ease: "power2.inOut"
+    });
+
+    
 }
