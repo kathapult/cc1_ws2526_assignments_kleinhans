@@ -65,19 +65,19 @@ function animate() {
   requestAnimationFrame(animate);
 
   // Pupillenbewegung
-  const maxOffset = 3;
+  const maxOffset = 8;
 
   cursorChicken.pupilL.position.x =
-    cursorChicken.basePupilLPos.x + (mouse.x / window.innerWidth) * maxOffset;
+    cursorChicken.basePupilLPos.x - (mouse.x / window.innerWidth) * maxOffset;
 
   cursorChicken.pupilL.position.y =
-    cursorChicken.basePupilLPos.y + (mouse.y / window.innerHeight) * maxOffset;
+    cursorChicken.basePupilLPos.y - (mouse.y / window.innerHeight) * maxOffset;
 
   cursorChicken.pupilR.position.x =
-    cursorChicken.basePupilRPos.x + (mouse.x / window.innerWidth) * maxOffset;
+    cursorChicken.basePupilRPos.x - (mouse.x / window.innerWidth) * maxOffset;
 
   cursorChicken.pupilR.position.y =
-    cursorChicken.basePupilRPos.y + (mouse.y / window.innerHeight) * maxOffset;
+    cursorChicken.basePupilRPos.y - (mouse.y / window.innerHeight) * maxOffset;
 
   renderer.render(scene, camera);
 }

@@ -1,9 +1,5 @@
 import * as THREE from "three";
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { GUI } from "lil-gui";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
-import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import { gsap } from "gsap";
 import { initAudio, playAudio, getAudioData } from "./audio.js";
 import { initModeTimeline, goToMode } from "./modeTimeline.js";
@@ -26,16 +22,63 @@ const headline = document.querySelector(".headlineContainer");
 
 function updateHeadlineOffset() {
   const navHeight = navbar.offsetHeight;
-  headline.style.top = navHeight + 30 + "px";
+  headline.style.top = navHeight + 70 + "px";
 }
 
 // ---- mode state for scene switch ---- 
 let currentVisualMode = "home";
+const headlineEl = document.getElementById("headline");
 
-export function setVisualMode(mode) {
-  currentVisualMode = mode;
+const modeHeadlines = {
+  home: "Hühnernest <br> Festival",
+  lineup: " Line Up ",
+  gallery: "Festival"
+};
+
+function updateHeadline(mode) {
+  if (!headlineEl || !modeHeadlines[mode]) return;
+
+
+  gsap.to(headlineEl, {
+    opacity: 0,
+    duration: 0.3,
+    onComplete: () => {
+      headlineEl.innerHTML = modeHeadlines[mode];
+      gsap.to(headlineEl, { opacity: 1, duration: 0.3 });
+    }
+  });
 }
 
+export function setVisualMode(mode) {
+  if (currentVisualMode === mode) return;
+  currentVisualMode = mode;
+
+  updateHeadline(mode);
+
+  if (mode === "lineup") {
+    if (!artistCube) showLineupArtists();
+    document.body.dataset.mode = "lineup";
+  } else {
+  
+    if (artistCube) {
+      scene.remove(artistCube);
+      if (artistCube.geometry) artistCube.geometry.dispose();
+      if (Array.isArray(artistCube.material)) {
+        artistCube.material.forEach((mat) => {
+          if (mat.map) mat.map.dispose();
+          mat.dispose();
+        });
+      } else if (artistCube.material) {
+        if (artistCube.material.map) artistCube.material.map.dispose();
+        artistCube.material.dispose();
+      }
+      artistCube = null;
+    }
+    document.body.dataset.mode = mode;
+  }
+}
+
+setVisualMode("home");
 
 // ---- SET MODES Navigation ----
 const navHome = document.querySelector(".nav-home");
@@ -101,7 +144,6 @@ initAudio(camera);
 const canvas = document.querySelector("#canvasThree");
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
 renderer.shadowMap.enabled = true;
@@ -267,69 +309,153 @@ const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
 scene.add(particleSystem);
 
 // ---- cursor light ----
-const cursorLight = new THREE.PointLight(0x00ffff, 400, 30, 2);
+const cursorLight = new THREE.PointLight(0x00ffff, 200, 30, 2);
 cursorLight.castShadow = true;
 cursorLight.decay = 2;
 cursorLight.intensity = 300;
-
 scene.add(cursorLight);
+
+
+// ---- LINEUP MODE Artist cube ----
+let artistCube;
+let magicCube;
+
+export function showLineupArtists() {
+  if (artistCube) return; // nicht doppelt erzeugen
+  if (currentVisualMode !== "lineup") return; // NEU: nur bei Lineup-Modus
+
+  const textureLoader = new THREE.TextureLoader();
+  const textures = [
+    textureLoader.load(new URL("../assets/img/klangflieder.png", import.meta.url).href),
+    textureLoader.load(new URL("../assets/img/kammermusik.png", import.meta.url).href),
+    textureLoader.load(new URL("../assets/img/bunny-minahri.png", import.meta.url).href),
+    textureLoader.load(new URL("../assets/img/agnes.jpg", import.meta.url).href),
+  ];
+
+  const materials = [
+    new THREE.MeshBasicMaterial({ map: textures[0] }),
+    new THREE.MeshBasicMaterial({ map: textures[1] }),
+    new THREE.MeshBasicMaterial({ color: 0x111111 }),
+    new THREE.MeshBasicMaterial({ color: 0x111111 }),
+    new THREE.MeshBasicMaterial({ map: textures[2] }),
+    new THREE.MeshBasicMaterial({ map: textures[3] }),
+  ];
+
+  const geometry = new THREE.BoxGeometry(3, 3, 3);
+  artistCube = new THREE.Mesh(geometry, materials);
+  artistCube.position.set(5, 11, 3);
+
+  // const direction = new THREE.Vector3();
+  // direction.subVectors({ x: 0, y: 20, z: 6 }, artistCube.position);
+
+  // const cameraAngleX = Math.atan2(direction.y, direction.z);
+  // const cameraAngleY = Math.atan2(direction.x, direction.z);
+  // const cameraAngleZ = Math.atan2(direction.x, direction.y);
+
+  
+  artistCube.lookAt(new THREE.Vector3( 0, 20, 6));
+  artistCube.rotation.z=0
+  
+  scene.add(artistCube);
+  magicCube = artistCube.rotation.y;
+  setupArtistClickEvents();
+  //rotateCubeToArtist(2);
+}
+
+function setupArtistClickEvents() {
+  const names = document.querySelectorAll(".artist-name");
+
+  names.forEach((name, i) => {
+
+    name.style.transitionDelay = `${i * 0.3}s`;
+
+    name.addEventListener("click", () => {
+      const id = parseInt(name.dataset.id);
+      rotateCubeToArtist(id);
+    });
+  });
+}
+
+// function getCubeRotationForSide(id) {
+//   let sideRotationY = 0;
+
+//   switch(id) {
+//     case 0: sideRotationY = -Math.PI / 2; break; // rechte Seite (+X)
+//     case 1: sideRotationY =  Math.PI / 2; break; // linke Seite (-X)
+//     case 2: sideRotationY =  0;          break; // front (+Z)
+//     case 3: sideRotationY =  Math.PI;   break; // back (-Z)
+//   }
+
+//   // angle to camera 
+//   const dx = 0-artistCube.position.x//camera.position.x - artistCube.position.x;
+//   const dz = 15-artistCube.position.z//camera.position.z - artistCube.position.z;
+//   const cameraAngle = Math.atan2(dx, dz);
+
+//   return cameraAngle + sideRotationY;
+// }
+
+function getCubeRotationForSide(id) {
+  if (!artistCube) return 0;
+
+  let sideRotationY = 0;
+
+  switch (id) {
+    case 0: sideRotationY = magicCube - Math.PI / 2; break;
+    case 1: sideRotationY = magicCube + Math.PI / 2; break;
+    case 2: sideRotationY = magicCube; break;
+    case 3: sideRotationY = magicCube + Math.PI; break;
+  }
+
+  return sideRotationY;
+}
+
+let artistCubeTween = null;
+
+function rotateCubeToArtist(id) {
+  const targetRotationY = getCubeRotationForSide(id);
+
+  if (artistCubeTween && artistCubeTween.isActive()) return;
+
+  artistCubeTween = gsap.to(artistCube.rotation, {
+    y: targetRotationY,
+    duration: 1.5,
+    ease: "power2.inOut",
+    onComplete: () => {
+      artistCubeTween = null; 
+    }
+  });
+}
 
 
 // ---- animated pointlights ----
 function createMovingLight(color) {
 
-  const intensity = 800; // WebGL braucht weniger als WebGPU
+  const intensity = 800; 
   const distance = 40;
-  const light = new THREE.PointLight(color, intensity, distance, 2);
-  light.castShadow = true;
+  const lightBulb = new THREE.PointLight(color, intensity, distance, 2);
+  lightBulb.castShadow = true;
 
-  light.shadow.mapSize.width = 1024;
-  light.shadow.mapSize.height = 1024;
-  light.shadow.bias = -0.002;
-  light.shadow.radius = 6;
+  lightBulb.shadow.mapSize.width = 1024;
+  lightBulb.shadow.mapSize.height = 1024;
+  lightBulb.shadow.bias = -0.002;
+  lightBulb.shadow.radius = 6;
 
   // center light
   const bulbGeometry = new THREE.SphereGeometry(0.5, 16, 8);
   const bulbMaterial = new THREE.MeshBasicMaterial({ color });
   const bulbMesh = new THREE.Mesh(bulbGeometry, bulbMaterial);
-  light.add(bulbMesh);
+  lightBulb.add(bulbMesh);
 
-  return light;
+  return lightBulb;
 }
 
 // ----- light shell texture -----
-const pointLight1 = createMovingLightWithShell(0x0088ff);
+const shell=createShell()
+const pointLight1 = createMovingLightWithShell(0x0088ff, shell);
 const pointLight2 = createMovingLight(0xff8844);
 
-function createMovingLightWithShell(color) {
-
-  let intensity = 700;
-  const distance = 50;
-  const light = new THREE.PointLight(color, intensity, distance, 2);
-  light.castShadow = true;
-
-  light.shadow.mapSize.width = 1024;
-  light.shadow.mapSize.height = 1024;
-  light.shadow.bias = -0.002;
-  light.shadow.radius = 6;
-
-  // light
-  const bulbGeo = new THREE.SphereGeometry(0.6, 16, 12);
-  const bulbMat = new THREE.MeshBasicMaterial({ color });
-  const bulb = new THREE.Mesh(bulbGeo, bulbMat);
-  light.add(bulb);
-
-  // shell texture
-  const shellGeo = new THREE.SphereGeometry(4, 32, 16);
-
-  // ---- gernerated texture ----
-  //const alphaTexture = createStripedTexture();
-  // const shellMat = new THREE.MeshStandardMaterial({
-  //   color: color,
-  //   side: THREE.DoubleSide,
-  //   alphaMap: alphaTexture,
-  //   alphaTest: 0.5
-  // });
+function createShell() {
+    const shellGeo = new THREE.SphereGeometry(4, 32, 16);
 
   // PNG texture
   const textureLoader = new THREE.TextureLoader();
@@ -345,6 +471,30 @@ function createMovingLightWithShell(color) {
   });
 
   const shell = new THREE.Mesh(shellGeo, shellMat);
+
+  return shell;
+}
+
+function createMovingLightWithShell(color, shell) {
+
+let intensity = 700;
+const distance = 50;
+const light = new THREE.PointLight(color, intensity, distance, 2);
+  
+  light.castShadow = true;
+
+  light.shadow.mapSize.width = 1024;
+  light.shadow.mapSize.height = 1024;
+  light.shadow.bias = -0.002;
+  light.shadow.radius = 6;
+
+  // light
+  const bulbGeo = new THREE.SphereGeometry(0.6, 16, 12);
+  const bulbMat = new THREE.MeshBasicMaterial({ color });
+  const bulb = new THREE.Mesh(bulbGeo, bulbMat);
+  light.add(bulb);
+
+  // shell texture
   shell.castShadow = true;
   shell.receiveShadow = true;
   light.add(shell);
@@ -370,20 +520,32 @@ function getVisibleSize(camera) {
   return { width, height };
 }
 
+let cubeRotation = 0;
+
 function animate() {
 
+//   if(currentVisualMode==='lineup'){
+
+//    artistCube.rotateX(0.001);
+// }
+
   requestAnimationFrame(animate);
-  controls.update();
 
   const time = performance.now() * 0.001;
 
-  // ----- MODE BASED AUDIO + LIGHT CONTROL ----- 
+  // ----- LINEUP MODE audio + light control ----- 
   let normalized = 0;
 
   if (currentVisualMode === "lineup") {
     const audio = getAudioData();
     normalized = Math.pow(audio / 128, 2);
-    const pulseStrength = 10.6; // pulse
+    const pulseStrength = 30; // pulse
+
+    gsap.to(pointLight1.color, { r: 1, g: 0, b: 0.8, duration: 1 });
+    gsap.to(pointLight2.color, { r: 0, g: 1, b: 1, duration: 1 });
+
+    pointLight1.userData.baseIntensity = 800;
+    pointLight2.userData.baseIntensity = 800;
 
     pointLight1.intensity = pointLight1.userData.baseIntensity * (1 + normalized * pulseStrength);
     pointLight2.intensity = pointLight2.userData.baseIntensity * (1 + normalized * pulseStrength);
@@ -394,7 +556,18 @@ function animate() {
       const scale = 1 + normalized * 2;
       pointLight1.userData.shell.scale.set(scale, scale, scale);
     }
-  } 
+
+  } else {
+    gsap.to(pointLight1.color, { r: 1, g: 0.53, b: 0.26, duration: 1 });
+    gsap.to(pointLight2.color, { r: 0, g: 0.53, b: 1, duration: 1 });
+
+
+    pointLight1.userData.baseIntensity = 300;
+    pointLight2.userData.baseIntensity = 300;
+
+    pointLight1.intensity = pointLight1.userData.baseIntensity * (1 + normalized * 1);
+    pointLight2.intensity = pointLight2.userData.baseIntensity * (1 + normalized * 1);
+  }
 
    // ----- GENERAL LIGHT MOVEMENT ----- 
   pointLight1.position.x = Math.sin(time * 0.6) * 20;
@@ -425,7 +598,6 @@ function animate() {
     dummy.matrix.decompose(dummy.position, dummy.quaternion, dummy.scale);
     dummy.position.add(data.velocity);
 
-    // rotation
     dummy.rotateX(data.rotationSpeed.x * motion.featherRotationFactor);
     dummy.rotateY(data.rotationSpeed.y * motion.featherRotationFactor);
     dummy.rotateZ(data.rotationSpeed.z * motion.featherRotationFactor);
@@ -434,7 +606,6 @@ function animate() {
     data.velocity.x += Math.sin(time + i) * 0.0007 * motion.featherWindFactor;
     data.velocity.z += Math.cos(time + i) * 0.0007 * motion.featherWindFactor;
 
-    // reset y
     if (dummy.position.y < 0) {
       dummy.position.y = 50;
       dummy.position.x = (Math.random() - 0.5) * 80;
@@ -453,6 +624,7 @@ function animate() {
 
   feathers.instanceMatrix.needsUpdate = true;
 
+
   // ----- CURSOR LIGHT ----- 
   const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
   vector.unproject(camera);
@@ -467,10 +639,7 @@ function animate() {
   if (intersects.length > 0) {
     cursorLight.position.copy(intersects[0].point);
   }
-
-
   renderer.render(scene, camera);
-
 }
 
 animate();
@@ -517,88 +686,8 @@ drawOverlay();
 // EXPORTS
 // ============================================
 // ---- LINE UP artist animation -----
-export function showLineupArtists() {
 
-  console.log("showLineupArtists called"); // DEBUG
-
-  const lineupSection = document.querySelector(".lineup-section");
-  const tboard = lineupSection?.querySelector(".lineup-tboard");
-
-  if (!lineupSection || !tboard) return;
-
-  // remove old img
-  // const existingImages = lineupSection.querySelectorAll(".artist-image");
-  // existingImages.forEach(img => img.remove());
-
-  // add img
-  const artists = [
-    {
-      id: 0,
-      name: "Klangflieder",
-      src: new URL("../assets/img/klangflieder.png", import.meta.url).href,
-      left: "10%",
-      top: "40%",
-  
-    },
-    {
-      id: 1,
-      name: "kammer.musik",
-      src: new URL("../assets/img/kammermusik.png", import.meta.url).href,
-      left: "85%",
-      top: "30%",
-  
-    },
-    {
-      id: 2,
-      name: "Bunny b2b Minahri",
-      src: new URL("../assets/img/bunny-minahri.png", import.meta.url).href,
-      left: "40%",
-      top: "80%",
-  
-    }
-  ];
-
-  artists.forEach((artist, i) => {
-    const img = document.createElement("img");
-    img.src = artist.src;
-    img.alt = artist.name;
-    img.classList.add("artist-image");
-    img.dataset.artistId = artist.id; // hover initialization
-
-    img.style.position = "absolute";
-    img.style.left = artist.left;
-    img.style.top = artist.top;
-    img.style.width = "120px";
-    img.style.height = "auto";
-    img.style.opacity = 0; // fade-in
-    img.style.cursor = "pointer";
-    img.style.transition = "transform 0.3s, box-shadow 0.3s";
-
-    // Hover
-    img.addEventListener("mouseenter", () => {
-      img.style.transform = "scale(1.2)";
-      img.style.boxShadow = "0 0 15px rgba(255,255,255,0.8)";
-    });
-    img.addEventListener("mouseleave", () => {
-      img.style.transform = "scale(1)";
-      img.style.boxShadow = "none";
-    });
-
-    lineupSection.appendChild(img);
-
-    // fade-In
-    gsap.to(img, {
-      opacity: 1,
-      duration: 1,
-      delay: i * 0.2,
-      ease: "power2.out",
-    });
-  });
-}
-
-
-
-// Lade Disco-Ball einmalig, danach Timeline starten
+// load Disco-Ball 
 if (!discoBall) {
   gltfLoader.load("./assets/models/disco.glb", (gltf) => {
     discoBall = gltf.scene;
@@ -618,7 +707,6 @@ if (!discoBall) {
     initTimelinesWhenReady();
   });
 }
-
 
 // ---- start timeline ----
 const djPult = document.querySelector(".DJpult");
@@ -642,6 +730,6 @@ function initTimelinesWhenReady() {
 
 
 // ---- EXPORTS ----
-export { camera, scene, djPult, discoBall, spotLight, lampLight, pointLight1, pointLight2, ambientLight, motion };
+export { camera, scene, djPult, discoBall, spotLight, lampLight, pointLight1, pointLight2, ambientLight, motion, shell };
 
 

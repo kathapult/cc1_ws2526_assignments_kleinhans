@@ -59,10 +59,10 @@ export function initModeTimeline(dependencies) {
   masterTL.set(deps.motion, { featherRotationFactor: 1, featherWindFactor: 1 }, 1);
 
   // Call: Lineup Bilder anzeigen 
-  masterTL.call(() => {
-    console.log('LineUp Artists called')
-    showLineupArtists();
-  }, null, 1);
+//   masterTL.call(() => {
+//     console.log('LineUp Artists called')
+//     showLineupArtists();
+//   }, null, 1);
 
     masterTL.to(deps.spotLight, {
     intensity: 0,
@@ -101,6 +101,7 @@ export function initModeTimeline(dependencies) {
 function onModeChange(mode) {
   document.body.dataset.mode = mode;
 
+  // Sections
   const lineupSection = document.querySelector(".lineup-section");
   const gallerySection = document.querySelector(".gallery-section");
 
@@ -114,20 +115,22 @@ function onModeChange(mode) {
     gallerySection.style.pointerEvents = mode === "gallery" ? "auto" : "none";
   }
 
+  // Feather Motion
   if (mode === "lineup") {
     deps.motion.featherRotationFactor = 1;
     deps.motion.featherWindFactor = 1;
-  } else if (mode === "gallery") {
-    deps.motion.featherRotationFactor = 0.2;
-    deps.motion.featherWindFactor = 0.2;
+    playAudio();
   } else {
-    deps.motion.featherRotationFactor = 1;
-    deps.motion.featherWindFactor = 1;
+    deps.motion.featherRotationFactor = mode === "gallery" ? 0.2 : 1;
+    deps.motion.featherWindFactor = mode === "gallery" ? 0.2 : 1;
+    stopAudio();
   }
 
-  if (mode === "lineup") playAudio();
-  else stopAudio();
-  showLineupArtists(); 
+  // Gallery
+    if (gallerySection) {
+    gallerySection.style.opacity = mode === "gallery" ? 1 : 0;
+    gallerySection.style.pointerEvents = mode === "gallery" ? "auto" : "none";
+    }
 }
 
 // --------------------------------------------------
@@ -143,8 +146,8 @@ export function goToMode(mode) {
 
   const targetPositions = {
     home: { x: 0, y: 0, z: 60 },
-    lineup: { x: 0, y: 0, z: 30 },
-    gallery: { x: 0, y: 20, z: 6 },
+    lineup: { x: 0, y: 20, z: 6 },
+    gallery: { x: 0, y: 0, z: 30 },
     //gallery: { x: 0, y: -10, z: 0 },
   };
   
@@ -175,6 +178,31 @@ export function goToMode(mode) {
     duration: 2
   });
 
+  const lights = {
+    home: { intensity: 300,
+            color1: { r: 1, g: 0, b: 0.8 },
+            color1: { r: 0, g: 1, b: 1 }, 
+        },
+    lineup: { intensity: 800,
+            color1: { r: 1, g: 0, b: 0.8 },
+            color1: { r: 0, g: 1, b: 1 }, 
+        },
+    gallery: { intensity: 300,
+            color1: { r: 1, g: 0, b: 0.8 },
+            color1: { r: 0, g: 1, b: 1 }, 
+        },
+  };
+
+    gsap.to(deps.pointLight1, {
+        intensity: lights[mode],
+        duration: 1,
+    });
+        gsap.to(deps.pointLight2, {
+        intensity: lights[mode],
+        duration: 1,
+    });
+    
+
     const djTargets = {
     home: 0,
     lineup: 200,
@@ -187,5 +215,5 @@ export function goToMode(mode) {
     ease: "power2.inOut"
     });
 
-    
+
 }

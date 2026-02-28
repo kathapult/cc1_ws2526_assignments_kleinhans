@@ -40,13 +40,13 @@ controls.enableDamping = true;
 
 // 4. GEOMETRY
 
-gltfLoader.load("./material/chicken.glb", (gltf) => {
-  console.log(gltf);
-  const chicken = gltf.scene;
-  chicken.scale.set(2, 2, 2);
+// gltfLoader.load("./material/chicken.glb", (gltf) => {
+//   console.log(gltf);
+//   const chicken = gltf.scene;
+//   chicken.scale.set(2, 2, 2);
 
-  scene.add(chicken);
-});
+//   scene.add(chicken);
+// });
 
 
 const geometryCircle = new THREE.CircleGeometry( 3, 20 );
@@ -65,10 +65,9 @@ const line = new THREE.Line(
   new THREE.LineBasicMaterial({ color: 0x122550 })
 );
 
-const geometrySphere = new THREE.SphereGeometry( 0.1, 0.3 );
 const geometrySphereSmall = new THREE.BoxGeometry( 2.4, 20 );
-const geometryIco = new THREE.IcosahedronGeometry(2);
-const geometryBox = new THREE.BoxGeometry(2, 2);
+const geometryIco = new THREE.IcosahedronGeometry(1);
+const geometryBox = new THREE.BoxGeometry(1, 1);
 
 
 // 5. MATERIALx
@@ -81,7 +80,7 @@ const palette = {
   darkGreen: 0x596647
 };
 
-const colors = ['#1e8123ff', '#FAE650', '#8A2EE6'];
+const colors = ['#0a581f', '#FAE650', '#8A2EE6'];
 
 const randomColor =
     colors[Math.floor(Math.random() * colors.length)];
@@ -100,16 +99,58 @@ const toonMaterial = new THREE.MeshPhongMaterial({
 
 
 // 6. MESH
+const sphereGroup = new THREE.Group();
+const icoGroup = new THREE.Group();
+scene.add(sphereGroup);
+scene.add(icoGroup);
+
 const circle = new THREE.LineLoop(outlineGeometry, materialGreen);
 circle.position.z = 2;
 
-//const sphere = new THREE.Mesh( geometrySphere, materialGreen );
-const sphereSmall = new THREE.Mesh( geometrySphereSmall, materialYellow );
-sphereSmall.position.z = -2;
 const ico = new THREE.Mesh( geometryIco, toonMaterial );
-gui.add(ico.scale, 'y', 0, 4).name('Ico scale Y');
 const box = new THREE.Mesh( geometryBox, toonMaterial );
-gui.add(box.scale, 'y', 0, 4).name('Box scale Y');
+
+const settings = {
+  rotationSpeed: 0.01,
+  boxScale: 1,
+  icoScale: 1,
+};
+
+
+gui.add(settings, "boxScale", 0.1, 3)
+  .name("Box Scale")
+  .onChange(v => {
+    sphereGroup.children.forEach(child => {
+      const base = child.userData.baseScale;
+      child.scale.set(
+        base.x * v,
+        base.y * v,
+        base.z * v
+      );
+    });
+  });
+
+gui.add(settings, "boxScale", 0.1, 3)
+  .name("Box Scale")
+  .onChange(v => {
+    sphereGroup.children.forEach(child => {
+      const base = child.userData.baseScale;
+      child.scale.set(
+        base.x * v,
+        base.y * v,
+        base.z * v
+      );
+    });
+  });
+
+  gui.add(circle.scale, "x", 0.1, 5)
+  .name("Circle Scale")
+  .onChange(v => circle.scale.setScalar(v));
+
+
+
+gui.add(settings, "rotationSpeed", 0, 0.05)
+   .name("Rotation Speed");
 
 const boxMesh = new THREE.Mesh(geometryBox, toonMaterial);
 const randomSeedSphere = 20;
@@ -120,34 +161,36 @@ icoMesh.position.z = -20;
 const randomSeedIco = 30;
 const randomSizeIco = 1.2;
 
+
 function createCloneSphere(mesh) {
 
   let i = -10;
   
-  while (i < 10) {
+  while (i < 20) {
     const mesh = box.clone();
-    // changes made to position and rotation to not effect original
-    //const rad = Math.PI * 2 * (i / 10);
-    
+  
     const x = i - 1;
     const z = THREE.MathUtils.randFloatSpread(randomSeedSphere);
-    const sizeX = THREE.MathUtils.randFloatSpread(randomSizeSphere);
-    const sizeY = THREE.MathUtils.randFloatSpread(randomSizeSphere);
+    const sizeX = THREE.MathUtils.randFloat(0.1, randomSizeSphere);
+    const sizeY = THREE.MathUtils.randFloat(0.1, randomSizeSphere);
+
+    mesh.scale.set(sizeX, sizeY, sizeX);
+    mesh.userData.baseScale = new THREE.Vector3(sizeX, sizeY, sizeX);
 
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
     mesh.material = new THREE.MeshToonMaterial({ color: new THREE.Color(randomColor) });
 
     mesh.position.set(x, z, 0);
-    mesh.scale.multiplyScalar(sizeX, sizeY); 
+    mesh.scale.set(sizeX, sizeY, sizeX);
     mesh.lookAt(boxMesh.position);
-    scene.add(mesh);
+    sphereGroup.add(mesh); 
     i += 0.1;
 
-    mesh.rotation.x += i + 0.1;
-    mesh.rotation.y += i + 0.1;
-
-    
+    mesh.rotation.x += i + 0.01;
+    mesh.rotation.y += i + 0.01;
   }
+
+  
 }
 
 
@@ -156,9 +199,8 @@ function createCloneIco(meshIco) {
 
   let i = -10;
   
-  while (i < 10) {
+  while (i < 20) {
     const meshIco = ico.clone();
-    // changes made to position and rotation to not effect original
     const rad = Math.PI * 2 * (i / 10);
     const x = i - 1;
     const z = THREE.MathUtils.randFloatSpread(randomSeedIco);
@@ -169,32 +211,28 @@ function createCloneIco(meshIco) {
     meshIco.material = new THREE.MeshToonMaterial({ color: new THREE.Color(randomColor) });
 
     meshIco.position.set(x, z, 0);
-    meshIco.scale.multiplyScalar(sizeX, sizeY); 
+    meshIco.scale.set(sizeX, sizeY, sizeX);
+    meshIco.userData.baseScale = new THREE.Vector3(sizeX, sizeY, sizeX);
     meshIco.lookAt(ico.position);
-    scene.add(meshIco);
+    icoGroup.add(meshIco); 
     i += 0.1;
 
-    meshIco.rotation.x += i + 0.1;
-    meshIco.rotation.y += i + 0.1;
+    meshIco.rotation.x += i + 0.01;
+    meshIco.rotation.y += i + 0.010;
   }
 }
+
 
 createCloneSphere(boxMesh);
 createCloneIco(icoMesh);
 
-
-// Add the cube to the scene
 scene.add(new THREE.AmbientLight(0xffffff, 0.3));
-
 scene.add(line);
 scene.add(circle);
-//scene.add(sphere);
-scene.add(sphereSmall);
 scene.add(ico);
 scene.add(box);
-
 scene.add(boxMesh);
-scene.add(icoMesh);
+
 
 
 // 7. RENDER LOOP
@@ -211,16 +249,19 @@ function getVisibleSize(camera) {
 
 
 function animate() {
-  //sphere.rotation.x += 0.005;
-  //sphere.rotation.y += 0.01;
+  sphereGroup.children.forEach(child => {
+    child.rotation.x  += settings.rotationSpeed;
+    child.rotation.y += settings.rotationSpeed;
+  });
 
-  //ico.position.x = 1;
-  //ico.position.y = -1;
-  //ico.position.z = 1;
+  icoGroup.children.forEach(child => {
+    child.rotation.x += settings.rotationSpeed;
+    child.rotation.y += settings.rotationSpeed;
+  });
 
-  ico.rotation.x += 0.01;
-  ico.rotation.y += 0.01;
 
+  ico.rotation.x += 0.001;
+  ico.rotation.y += 0.001;
 
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
@@ -231,10 +272,10 @@ animate();
 
 
 // 8. HANDLE WINDOW RESIZE
+
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
-
-window.addEventListener("resize", onWindowResize);
+  window.addEventListener("resize", onWindowResize);
