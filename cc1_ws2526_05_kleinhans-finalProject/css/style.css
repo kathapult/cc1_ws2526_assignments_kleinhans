@@ -17,6 +17,7 @@ a {
 
 #canvasThree {
   display: block;
+  pointer-events: none;
 }
 
 #uiCanvas {
@@ -190,7 +191,7 @@ h1 {
   padding: 0 3rem;
   text-align: center;
   text-decoration: none;
-  color: blueviolet;
+   color:  rgb(148, 84, 196);
 }
 .artist img {
   width: 100%;
@@ -310,4 +311,23 @@ footer {
   z-index: 10000;
   width: 100%;
   background-color: transparent!important;
+}
+.instagram {
+  width: 50px;
+  height: 50px;
+    position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1200;
+}
+.instagram-link {
+  font-size: 1.6rem;
+  color: white;
+  text-decoration: none;
+  transition: 0.3s ease;
+}
+
+.instagram-link:hover {
+   color:  rgb(148, 84, 196);
+  transform: scale(1.1);
 }

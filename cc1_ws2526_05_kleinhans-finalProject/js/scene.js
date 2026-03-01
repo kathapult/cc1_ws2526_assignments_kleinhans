@@ -3,6 +3,8 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { gsap } from "gsap";
 import { initAudio, playAudio, getAudioData } from "./audio.js";
 import { initModeTimeline, goToMode } from "./modeTimeline.js";
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
 
 console.log(THREE);
 
@@ -22,7 +24,7 @@ const headline = document.querySelector(".headlineContainer");
 
 function updateHeadlineOffset() {
   const navHeight = navbar.offsetHeight;
-  headline.style.top = navHeight + 70 + "px";
+  headline.style.top = navHeight + 40 + "px";
 }
 
 // ---- mode state for scene switch ---- 
@@ -126,6 +128,7 @@ directionalLight.shadow.camera.right = 50;
 directionalLight.shadow.camera.top = 50;
 directionalLight.shadow.camera.bottom = -50;
 
+
 // ============================================
 // 2. CAMERA
 // ============================================
@@ -136,6 +139,7 @@ const far = 100;
 const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
 camera.position.z = 50;
 
+
 initAudio(camera);
 
 // ============================================
@@ -144,6 +148,7 @@ initAudio(camera);
 const canvas = document.querySelector("#canvasThree");
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
+const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
 renderer.shadowMap.enabled = true;
@@ -530,6 +535,7 @@ function animate() {
 // }
 
   requestAnimationFrame(animate);
+  controls.update();
 
   const time = performance.now() * 0.001;
 
