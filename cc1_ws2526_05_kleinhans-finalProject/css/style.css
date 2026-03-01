@@ -317,9 +317,15 @@ footer {
   height: 50px;
     position: absolute;
   top: 20px;
-  left: 20px;
+  right: 20px;
   z-index: 1200;
 }
+@media (max-width: 768px) {
+  .instagram {
+    top: 10px;
+  }
+}
+
 .instagram-link {
   font-size: 1.6rem;
   color: white;
